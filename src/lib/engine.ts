@@ -121,6 +121,21 @@ export function normalizeInput(input: BuildInput): BuildInput {
   };
 }
 
+/** Valida um BuildInput vindo de fora (corpo de requisição, resposta do LLM). */
+export function sanitizeInput(raw: unknown): BuildInput {
+  const data = (raw ?? {}) as Partial<Record<keyof BuildInput, unknown>>;
+  const objectives = Array.isArray(data.objectives) ? data.objectives.filter((o): o is Objective => OBJECTIVE_PRIORITY.includes(o as Objective)) : [];
+  return normalizeInput({
+    budget: typeof data.budget === "number" ? data.budget : Number(data.budget),
+    objectives,
+    resolution: data.resolution === "1080p" || data.resolution === "4k" ? data.resolution : "1440p",
+    brand: data.brand === "amd" || data.brand === "intel" ? data.brand : "any",
+    includePeripherals: data.includePeripherals === true,
+    silent: data.silent === true,
+    prompt: typeof data.prompt === "string" ? data.prompt : "",
+  });
+}
+
 export function sameInput(a: BuildInput, b: BuildInput) {
   return JSON.stringify(normalizeInput(a)) === JSON.stringify(normalizeInput(b));
 }
@@ -217,7 +232,8 @@ function buildProfile(input: BuildInput, signals: PromptSignals): Profile {
     weights.render += 0.04;
   }
   if (signals.ai) {
-    weights.render += 0.08;
+    // IA local depende de GPU com CUDA e VRAM: peso alto, mesmo em perfis de escritório/dev.
+    weights.render += 0.3;
     weights.ram += 0.03;
   }
   if (signals.virtualization) {
@@ -592,10 +608,13 @@ function compatibilityFor(combo: Combo): CompatibilityCheck[] {
   ];
 }
 
-/** Executa o motor local completo e monta o resultado no formato da API. */
-export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {}): BuildResult {
+/**
+ * Executa o motor local completo e monta o resultado no formato da API.
+ * `signalsOverride`: sinais extraídos do texto pelo Gemini (senão, palavras-chave).
+ */
+export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {}, signalsOverride?: PromptSignals): BuildResult {
   const input = normalizeInput(rawInput);
-  const signals = parsePrompt(input.prompt);
+  const signals = signalsOverride ?? parsePrompt(input.prompt);
   const profile = buildProfile(input, signals);
   const peripherals = input.includePeripherals ? pickPeripheralKit(input, signals) : null;
   const pcBudget = input.budget - (peripherals?.price ?? 0);

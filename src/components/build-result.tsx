@@ -67,7 +67,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
         <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <p className="label-mono text-subtle">
-              Build {result.tier} · {result.platform} · {result.source === "api" ? "LLM /api/recomendacao" : "Motor local"}
+              Build {result.tier} · {result.platform} · {result.source === "api" ? `Textos por ${result.aiModel ?? "Gemini"}` : "Motor local (offline)"}
             </p>
             <p className="mt-2 font-mono text-4xl font-semibold tracking-tight">{brl(result.total)}</p>
             <p className="mt-1 text-sm text-muted">

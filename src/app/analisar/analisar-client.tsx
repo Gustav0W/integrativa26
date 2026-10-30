@@ -6,26 +6,15 @@ import { ArrowRight, Upload, X } from "lucide-react";
 import { EvaluationPanel } from "@/components/evaluation-panel";
 import { LoadingState } from "@/components/build-result";
 import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, Segmented, inputClass, primaryButton, secondaryButton } from "@/components/ui";
-import { extractPdfText, sleep } from "@/lib/api";
-import { BUDGET_MAX, BUDGET_MIN } from "@/lib/catalog";
-import { RESOLUTION_LABEL, brl, computeLocalBuild, evaluateBuild, type BuildEvaluation } from "@/lib/engine";
-import { parseSpecs, type DetectedSpecs } from "@/lib/nlp";
+import type { DocumentAnalysis } from "@/lib/analysis";
+import { requestDocumentAnalysis, sleep } from "@/lib/api";
+import { RESOLUTION_LABEL, brl } from "@/lib/engine";
 import { useSessionState, writeSessionState } from "@/lib/session-state";
-import type { BuildInput, BuildResult, Objective, Resolution } from "@/lib/types";
+import type { BuildResult, Objective, Resolution } from "@/lib/types";
 
 type Mode = "pdf" | "text";
 
-interface Analysis {
-  source: string;
-  text: string;
-  specs: DetectedSpecs;
-  evaluation: BuildEvaluation;
-  objectives: Objective[];
-  resolution: Resolution;
-  alternative: BuildResult | null;
-}
-
-const STEPS = ["Lendo o documento", "Identificando as peças citadas", "Conferindo compatibilidade entre elas", "Avaliando para o seu uso"];
+const STEPS = ["Lendo o documento com o Gemini", "Identificando as peças citadas", "Conferindo compatibilidade entre elas", "Escrevendo o parecer para o seu uso"];
 
 const SAMPLE_QUOTE = `ORÇAMENTO Nº 1042 — Loja Exemplo Informática
 Processador AMD Ryzen 5 5600 — R$ 599,00
@@ -45,7 +34,7 @@ export function AnalisarClient() {
   const [dragging, setDragging] = useState(false);
   const [objectives, setObjectives] = useSessionState<Objective[]>("analisar:objectives", ["arquitetura"]);
   const [resolution, setResolution] = useSessionState<Resolution>("analisar:resolution", "1080p");
-  const [analysis, setAnalysis] = useSessionState<Analysis | null>("analisar:result", null);
+  const [analysis, setAnalysis] = useSessionState<DocumentAnalysis | null>("analisar:result", null);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -67,33 +56,25 @@ export function AnalisarClient() {
     setError(null);
     setLoading(true);
     setStep(0);
-    try {
-      let text = pasted;
-      let source = "Texto colado";
-      if (mode === "pdf") {
-        if (!file) throw new Error("Escolha um PDF primeiro.");
-        const [extracted] = await Promise.all([extractPdfText(file), sleep(500)]);
-        text = extracted.text;
-        source = `${file.name} (${extracted.pages} página${extracted.pages === 1 ? "" : "s"})`;
+    // Os passos avançam enquanto o servidor trabalha; o último espera a resposta.
+    let active = true;
+    const animation = (async () => {
+      for (let i = 0; i < STEPS.length - 1 && active; i++) {
+        setStep(i);
+        await sleep(1400);
       }
-      if (!text.trim()) throw new Error(mode === "pdf" ? "Não há texto neste PDF (pode ser uma imagem escaneada). Copie e cole o conteúdo na opção “Colar texto”." : "Cole o texto do orçamento primeiro.");
-
-      setStep(1);
-      await sleep(450);
-      const specs = parseSpecs(text);
-      setStep(2);
-      await sleep(450);
-      const evaluation = evaluateBuild(specs.build, objectives, resolution, text);
-      setStep(3);
-      await sleep(450);
-
-      const alternativeInput: BuildInput | null = specs.totalPrice
-        ? { budget: Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, specs.totalPrice)), objectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt: "" }
-        : null;
-      setAnalysis({ source, text, specs, evaluation, objectives, resolution, alternative: alternativeInput ? computeLocalBuild(alternativeInput) : null });
+      if (active) setStep(STEPS.length - 1);
+    })();
+    try {
+      if (mode === "pdf" && !file) throw new Error("Escolha um PDF primeiro.");
+      if (mode === "text" && !pasted.trim()) throw new Error("Cole o texto do orçamento primeiro.");
+      const result = await requestDocumentAnalysis(mode === "pdf" && file ? { file } : { text: pasted }, objectives, resolution);
+      setAnalysis(result);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Não foi possível analisar o documento.");
     } finally {
+      active = false;
+      await animation;
       setLoading(false);
     }
   };
@@ -159,7 +140,7 @@ export function AnalisarClient() {
                     <button type="button" onClick={() => fileInput.current?.click()} className={`${secondaryButton} mt-3`}>
                       Escolher arquivo
                     </button>
-                    <p className="mt-3 font-mono text-[10px] text-subtle">Até 10MB · PDFs escaneados (imagem) não têm texto legível</p>
+                    <p className="mt-3 font-mono text-[10px] text-subtle">Até 10MB · o Gemini lê inclusive PDFs escaneados</p>
                   </>
                 )}
               </div>
@@ -195,7 +176,9 @@ export function AnalisarClient() {
                 <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">
                   <div>
                     <h2 className="text-sm font-semibold">O que a IA encontrou</h2>
-                    <p className="font-mono text-[11px] text-subtle">{analysis.source}</p>
+                    <p className="font-mono text-[11px] text-subtle">
+                      {analysis.source} · {analysis.aiModel ? `lido por ${analysis.aiModel}` : "leitura local (offline)"}
+                    </p>
                   </div>
                   {analysis.specs.totalPrice !== null && <span className="font-mono text-lg font-semibold">{brl(analysis.specs.totalPrice)}</span>}
                 </div>
@@ -224,6 +207,13 @@ export function AnalisarClient() {
                   {showText && <pre className="mt-2 max-h-60 overflow-auto border border-line bg-surface-2 p-3 text-[11px] whitespace-pre-wrap text-muted">{analysis.text}</pre>}
                 </div>
               </section>
+
+              {analysis.summary && (
+                <section className="border border-l-4 border-line border-l-brand bg-surface p-4">
+                  <p className="label-mono text-brand-text">Resumo da IA · {analysis.aiModel}</p>
+                  <p className="mt-2 text-sm leading-relaxed">{analysis.summary}</p>
+                </section>
+              )}
 
               <EvaluationPanel evaluation={analysis.evaluation} resolutionLabel={RESOLUTION_LABEL[analysis.resolution]} />
 

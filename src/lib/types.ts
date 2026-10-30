@@ -63,6 +63,8 @@ export interface BuildResult {
   interpretation: string[];
   overBudget: boolean;
   source: "local" | "api";
+  /** Modelo de linguagem que escreveu os textos (quando source = "api"). */
+  aiModel?: string;
   input: BuildInput;
 }
 
