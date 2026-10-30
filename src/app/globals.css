@@ -3,41 +3,46 @@
 /* Tema controlado por data-theme no <html> (padrão: claro). */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Modo claro: verde escuro como cor principal. */
+/*
+ * Identidade "ficha técnica": papel de datasheet, tinta preta, verde de placa
+ * de circuito (PCB) e cobre das trilhas. Cantos retos, linhas finas, sem sombras.
+ */
 :root {
-  --canvas: #f4f6f3;
-  --surface: #ffffff;
-  --surface-2: #eef2ed;
-  --line: #dce3da;
-  --fg: #13201a;
-  --fg-muted: #4a5a51;
-  --fg-subtle: #7b887f;
-  --brand: #14532d;
-  --brand-hover: #0f3f22;
-  --brand-from: #14532d;
-  --brand-to: #1e6b3f;
-  --brand-soft: #e3efe6;
-  --brand-text: #14532d;
-  --on-brand: #ffffff;
+  --canvas: #f1efe7;
+  --surface: #faf9f4;
+  --surface-2: #e9e6db;
+  --line: #d6d2c3;
+  --ink: #1b1a15;
+  --grid: rgb(27 26 21 / 0.045);
+  --fg: #1b1a15;
+  --fg-muted: #555348;
+  --fg-subtle: #858173;
+  --brand: #0f4a32;
+  --brand-hover: #0a3a27;
+  --brand-soft: #dde7dc;
+  --brand-text: #0f4a32;
+  --on-brand: #f1efe7;
+  --copper: #b06a24;
   color-scheme: light;
 }
 
-/* Modo escuro: violeta + azul neon. */
+/* Modo escuro: osciloscópio — fundo grafite, violeta como sinal, âmbar como LED. */
 [data-theme="dark"] {
-  --canvas: #09090b;
-  --surface: #131316;
-  --surface-2: #0c0c0f;
-  --line: #27272a;
-  --fg: #f4f4f5;
-  --fg-muted: #a1a1aa;
-  --fg-subtle: #71717a;
-  --brand: #8b5cf6;
-  --brand-hover: #7c3aed;
-  --brand-from: #7c3aed;
-  --brand-to: #2563eb;
-  --brand-soft: rgb(139 92 246 / 0.14);
-  --brand-text: #c4b5fd;
-  --on-brand: #ffffff;
+  --canvas: #0e0d12;
+  --surface: #15141b;
+  --surface-2: #1c1b24;
+  --line: #2b2935;
+  --ink: #ebe8f5;
+  --grid: rgb(235 232 245 / 0.035);
+  --fg: #ebe8f5;
+  --fg-muted: #a6a2b6;
+  --fg-subtle: #6f6b80;
+  --brand: #9b7bff;
+  --brand-hover: #b29aff;
+  --brand-soft: rgb(155 123 255 / 0.13);
+  --brand-text: #c2b0ff;
+  --on-brand: #0e0d12;
+  --copper: #ffb547;
   color-scheme: dark;
 }
 
@@ -46,18 +51,37 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-line: var(--line);
+  --color-ink: var(--ink);
   --color-fg: var(--fg);
   --color-muted: var(--fg-muted);
   --color-subtle: var(--fg-subtle);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
-  --color-brand-from: var(--brand-from);
-  --color-brand-to: var(--brand-to);
   --color-brand-soft: var(--brand-soft);
   --color-brand-text: var(--brand-text);
   --color-on-brand: var(--on-brand);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-copper: var(--copper);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-display: var(--font-archivo);
+}
+
+/* Títulos largos (Archivo expandida), usados com moderação. */
+@utility heading {
+  font-family: var(--font-archivo), var(--font-plex-sans), sans-serif;
+  font-stretch: 118%;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+/* Rótulos técnicos: mono, caixa alta, espaçado. */
+@utility label-mono {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 html {
@@ -65,9 +89,39 @@ html {
 }
 
 body {
-  background: var(--canvas);
   color: var(--fg);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  /* Papel milimetrado bem discreto */
+  background-color: var(--canvas);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+::selection {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+/* Sinal "correndo" pelas trilhas da ilustração da página inicial. */
+.trace-signal {
+  stroke-dasharray: 10 260;
+  stroke-dashoffset: 270;
+  animation: trace-signal 3.6s linear infinite;
+}
+@keyframes trace-signal {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trace-signal {
+    animation: none;
+    stroke-dasharray: none;
+    opacity: 0;
+  }
 }
 
 /* ============================================================================

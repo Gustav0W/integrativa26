@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Bot, ChevronDown, ChevronUp, CircleCheck, MessagesSquare, RotateCcw, SendHorizontal, TriangleAlert, User } from "lucide-react";
+import { ChevronDown, ChevronUp, RotateCcw, SendHorizontal } from "lucide-react";
 import { BuildResultView } from "@/components/build-result";
-import { CATEGORY_UI, PageIntro, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { CATEGORY_UI, PageIntro, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { brl, clampBudget, objectivesLabel, scoreLabel } from "@/lib/engine";
 import { parseRequest } from "@/lib/nlp";
@@ -116,7 +116,7 @@ export function ConversarClient() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-      <PageIntro icon={MessagesSquare} title="Descreva para a IA" description="Conte com suas palavras o que você faz no computador e quanto pode gastar. Depois, peça ajustes como numa conversa.">
+      <PageIntro code="02" title="Descreva para a IA" description="Conte com suas palavras o que você faz no computador e quanto pode gastar. Depois, peça ajustes como numa conversa.">
         {messages.length > 0 && (
           <button type="button" onClick={() => setMessages([])} className={secondaryButton}>
             <RotateCcw className="size-3.5" />
@@ -125,106 +125,94 @@ export function ConversarClient() {
         )}
       </PageIntro>
 
-      <div className="space-y-5">
+      <div className="space-y-6">
         {messages.length === 0 && (
-          <div className="rounded-2xl border border-line bg-surface p-6 shadow-sm">
-            <div className="flex items-start gap-3">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-from to-brand-to">
-                <Bot className="size-5 text-on-brand" />
-              </span>
-              <div className="text-sm">
-                <p className="font-semibold">Olá! Me conta: para que você vai usar o computador?</p>
-                <p className="mt-1 text-muted">Pode citar programas, jogos, se precisa de monitor e quanto quer gastar. Exemplos:</p>
-              </div>
-            </div>
-            <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {STARTERS.map((starter) => (
-                <button key={starter} type="button" onClick={() => void send(starter)} className="rounded-xl border border-line bg-surface-2 p-3 text-left text-xs text-muted transition hover:border-brand/50 hover:text-fg">
-                  “{starter}”
-                </button>
-              ))}
+          <div className="border border-line bg-surface">
+            <p className="label-mono border-b border-line px-4 py-2 text-brand-text">SmartBuild AI</p>
+            <div className="p-5">
+              <p className="font-semibold">Me conta: para que você vai usar o computador?</p>
+              <p className="mt-1 text-sm text-muted">Pode citar programas, jogos, se precisa de monitor e quanto quer gastar. Por exemplo:</p>
+              <ul className="mt-4 border-t border-line">
+                {STARTERS.map((starter) => (
+                  <li key={starter}>
+                    <button type="button" onClick={() => void send(starter)} className="group flex w-full items-baseline gap-3 border-b border-line px-1 py-3 text-left text-sm text-muted transition hover:bg-surface-2 hover:text-fg">
+                      <span className="font-mono text-xs text-brand-text">&gt;</span>
+                      <span className="flex-1">{starter}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         )}
 
         {messages.map((message) =>
           message.role === "user" ? (
-            <div key={message.id} className="flex justify-end gap-2">
-              <p className="max-w-[85%] rounded-2xl rounded-tr-sm bg-linear-to-r from-brand-from to-brand-to px-4 py-2.5 text-sm text-on-brand shadow-sm">{message.text}</p>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-2 ring-1 ring-line">
-                <User className="size-4 text-muted" />
-              </span>
+            <div key={message.id} className="ml-auto max-w-[85%] border-r-2 border-brand pr-4 text-right">
+              <p className="label-mono text-subtle">Você</p>
+              <p className="mt-1 text-[15px]">{message.text}</p>
             </div>
           ) : (
-            <div key={message.id} className="flex gap-2">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-brand-from to-brand-to">
-                <Bot className="size-4 text-on-brand" />
-              </span>
-              <div className="min-w-0 flex-1 space-y-3">
-                <div className="rounded-2xl rounded-tl-sm border border-line bg-surface p-4 shadow-sm">
+            <div key={message.id} className="space-y-3">
+              <div className="border border-line bg-surface">
+                <p className="label-mono flex items-center gap-2 border-b border-line px-4 py-2 text-brand-text">
+                  <span className="size-1.5 bg-copper" />
+                  SmartBuild AI
+                </p>
+                <div className="p-4">
                   <p className="text-sm">{message.text}</p>
                   {message.notes.length > 0 && (
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-3 space-y-1">
                       {message.notes.map((note) => (
-                        <li key={note} className="flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-300">
-                          <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                        <li key={note} className="flex items-baseline gap-2 text-xs text-muted">
+                          <span className="label-mono shrink-0 text-copper">[nota]</span>
                           {note}
                         </li>
                       ))}
                     </ul>
                   )}
 
-                  <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
-                    {message.result.parts.map((part) => {
-                      const Icon = CATEGORY_UI[part.category].icon;
-                      return (
-                        <li key={part.category} className="flex items-center gap-3 px-3 py-2 text-xs">
-                          <Icon className={`size-4 shrink-0 ${CATEGORY_UI[part.category].text}`} />
-                          <span className="min-w-0 flex-1 truncate">{part.name}</span>
-                          <span className="shrink-0 font-semibold">{part.price > 0 ? brl(part.price) : "Incluso"}</span>
-                        </li>
-                      );
-                    })}
+                  <ul className="mt-4 divide-y divide-line border-y border-line">
+                    {message.result.parts.map((part) => (
+                      <li key={part.category} className="flex items-baseline gap-3 py-2 text-xs">
+                        <span className="label-mono w-10 shrink-0 text-subtle">{CATEGORY_UI[part.category].code}</span>
+                        <span className="min-w-0 flex-1 truncate">{part.name}</span>
+                        <span className="shrink-0 font-mono">{part.price > 0 ? brl(part.price) : "incluso"}</span>
+                      </li>
+                    ))}
                   </ul>
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                      <CircleCheck className="size-4" />
-                      {message.result.compatibility.every((c) => c.ok) ? "Peças 100% compatíveis" : "Há itens para revisar"}
+                    <span className={`label-mono ${message.result.compatibility.every((c) => c.ok) ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                      {message.result.compatibility.every((c) => c.ok) ? "[OK] Peças 100% compatíveis" : "[!] Há itens para revisar"}
                     </span>
                     <button type="button" onClick={() => setExpanded(expanded === message.id ? null : message.id)} className={secondaryButton}>
                       {expanded === message.id ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
-                      {expanded === message.id ? "Fechar detalhes" : "Ver detalhes, motivos e preços"}
+                      {expanded === message.id ? "Fechar detalhes" : "Detalhes, motivos e preços"}
                     </button>
                   </div>
                 </div>
-                {expanded === message.id && <BuildResultView result={message.result} />}
               </div>
+              {expanded === message.id && <BuildResultView result={message.result} />}
             </div>
           ),
         )}
 
         {thinking && (
-          <div className="flex items-center gap-2 text-sm text-muted">
-            <span className="flex size-8 items-center justify-center rounded-full bg-linear-to-br from-brand-from to-brand-to">
-              <Bot className="size-4 text-on-brand" />
-            </span>
-            <span className="flex gap-1 rounded-2xl border border-line bg-surface px-4 py-3">
-              <span className="size-1.5 animate-bounce rounded-full bg-brand" />
-              <span className="size-1.5 animate-bounce rounded-full bg-brand [animation-delay:150ms]" />
-              <span className="size-1.5 animate-bounce rounded-full bg-brand [animation-delay:300ms]" />
-            </span>
-            Analisando peças e preços…
-          </div>
+          <p className="flex items-center gap-2 font-mono text-xs text-muted">
+            <span className="text-brand-text">&gt;</span>
+            analisando peças e preços
+            <span className="inline-block h-3.5 w-2 animate-pulse bg-brand" />
+          </p>
         )}
         <div ref={bottomRef} />
       </div>
 
       {/* Campo de mensagem */}
-      <div className="sticky bottom-0 mt-6 bg-linear-to-t from-canvas via-canvas to-transparent pt-4 pb-4">
+      <div className="sticky bottom-0 mt-8 bg-canvas pt-3 pb-4">
         {lastAi && !thinking && (
           <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
             {FOLLOW_UPS.map((text) => (
-              <button key={text} type="button" onClick={() => void send(text)} className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-muted transition hover:border-brand/50 hover:text-fg">
+              <button key={text} type="button" onClick={() => void send(text)} className="shrink-0 border border-line bg-surface px-3 py-1.5 text-xs text-muted transition hover:border-ink/50 hover:text-fg">
                 {text}
               </button>
             ))}
@@ -235,8 +223,9 @@ export function ConversarClient() {
             event.preventDefault();
             void send(draft);
           }}
-          className="flex items-end gap-2 rounded-2xl border border-line bg-surface p-2 shadow-lg"
+          className="flex items-stretch border border-ink/80 bg-surface focus-within:border-brand"
         >
+          <span className="pt-3 pl-3 font-mono text-sm text-brand-text">&gt;</span>
           <textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value.slice(0, 500))}
@@ -248,10 +237,11 @@ export function ConversarClient() {
             }}
             rows={2}
             placeholder={lastAi ? "Peça um ajuste: mais barato, em 4K, incluir monitor…" : "Ex.: Faço arquitetura e jogo nas horas vagas, tenho até 9 mil."}
-            className={`${inputClass} resize-none border-0 focus:ring-0`}
+            className="w-full resize-none bg-transparent px-2 py-2.5 text-sm outline-none placeholder:text-subtle"
           />
           <button type="submit" disabled={!draft.trim() || thinking} className={`${primaryButton} shrink-0 px-4`} aria-label="Enviar mensagem">
-            <SendHorizontal className="size-4" />
+            Enviar
+            <SendHorizontal className="size-3.5" />
           </button>
         </form>
       </div>

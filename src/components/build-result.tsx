@@ -1,18 +1,18 @@
 "use client";
 
 import { ViewTransition, startTransition, useRef, useState } from "react";
-import { Activity, Bot, CircleCheck, Copy, Download, Gauge, Lightbulb, ListChecks, Package, RotateCcw, ShieldCheck, Target, TriangleAlert, Wallet, X } from "lucide-react";
+import { Copy, Download, RotateCcw, X } from "lucide-react";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, objectivesLabel, scoreLabel } from "@/lib/engine";
 import type { BuildResult } from "@/lib/types";
 import { PartCard } from "./part-card";
-import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreRing, secondaryButton } from "./ui";
+import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, secondaryButton } from "./ui";
 
 type Tab = "parts" | "health" | "tips";
 
-const TABS: { id: Tab; label: string; icon: typeof Package }[] = [
-  { id: "parts", label: "Peças", icon: Package },
-  { id: "health", label: "Compatibilidade & desempenho", icon: ListChecks },
-  { id: "tips", label: "Dicas da IA", icon: Lightbulb },
+const TABS: { id: Tab; label: string }[] = [
+  { id: "parts", label: "Peças" },
+  { id: "health", label: "Compatibilidade & desempenho" },
+  { id: "tips", label: "Dicas da IA" },
 ];
 
 export function downloadText(filename: string, text: string) {
@@ -25,7 +25,7 @@ export function downloadText(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
-/** Resultado de uma recomendação: resumo enxuto + detalhes em abas. */
+/** Resultado de uma recomendação: cabeçalho enxuto + detalhes em abas. */
 export function BuildResultView({ result, onRegenerate }: { result: BuildResult; onRegenerate?: () => void }) {
   const [tab, setTabState] = useState<Tab>("parts");
   /** Dentro de startTransition para o React animar a troca de aba (crossfade). */
@@ -38,6 +38,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
   const remaining = result.budget - result.total;
   const bottleneckPct = Math.round(result.bottleneck * 100);
   const gaming = input.objectives.includes("gaming");
+  const paidParts = result.parts.filter((part) => part.price > 0);
 
   const showToast = (message: string) => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -60,21 +61,16 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
   };
 
   return (
-    <div className="space-y-4">
-      {/* Resumo */}
-      <div className="rounded-2xl border border-brand/30 bg-surface p-5 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="space-y-5">
+      {/* Cabeçalho da build */}
+      <div className="border border-ink/80 bg-surface">
+        <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-brand-text uppercase">Build {result.tier}</span>
-              <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-semibold text-muted">{result.platform}</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-[11px] font-semibold text-muted">
-                <Bot className="size-3" />
-                {result.source === "api" ? "LLM via /api/recomendacao" : "Motor local (offline)"}
-              </span>
-            </div>
-            <p className="mt-3 text-3xl font-bold tracking-tight">{brl(result.total)}</p>
-            <p className="text-sm text-muted">
+            <p className="label-mono text-subtle">
+              Build {result.tier} · {result.platform} · {result.source === "api" ? "LLM /api/recomendacao" : "Motor local"}
+            </p>
+            <p className="mt-2 font-mono text-4xl font-semibold tracking-tight">{brl(result.total)}</p>
+            <p className="mt-1 text-sm text-muted">
               {result.parts.length} itens · {objectivesLabel(input.objectives, gaming ? input.resolution : undefined)}
             </p>
           </div>
@@ -85,7 +81,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
             </button>
             <button type="button" onClick={handleExport} className={secondaryButton}>
               <Download className="size-3.5" />
-              Exportar orçamento
+              Exportar
             </button>
             {onRegenerate && (
               <button type="button" onClick={onRegenerate} className={secondaryButton}>
@@ -96,34 +92,27 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
           </div>
         </div>
 
-        {/* Três indicadores rápidos */}
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <button type="button" onClick={() => setTab("health")} className="rounded-xl bg-surface-2 p-3 text-left transition hover:ring-1 hover:ring-brand/30">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-subtle uppercase">
-              <ShieldCheck className="size-3.5" /> Compatibilidade
-            </span>
-            <span className={`mt-1 flex items-center gap-1.5 text-sm font-bold ${allOk ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-              {allOk ? <CircleCheck className="size-4" /> : <TriangleAlert className="size-4" />}
-              {allOk ? "100% compatível" : "Revisar peças"}
+        {/* Três leituras rápidas, separadas por linhas */}
+        <div className="grid divide-y divide-line border-t border-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <button type="button" onClick={() => setTab("health")} className="p-4 text-left transition hover:bg-surface-2">
+            <span className="label-mono block text-subtle">Compatibilidade</span>
+            <span className={`mt-1.5 block font-mono text-sm font-semibold ${allOk ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+              {allOk ? `${result.compatibility.length}/${result.compatibility.length} verificações OK` : "Revisar peças"}
             </span>
           </button>
-          <div className="rounded-xl bg-surface-2 p-3">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-subtle uppercase">
-              <Wallet className="size-3.5" /> Orçamento
+          <div className="p-4">
+            <span className="label-mono flex justify-between text-subtle">
+              Orçamento
+              <span className={remaining >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>{remaining >= 0 ? `sobra ${brl(remaining)}` : `+${brl(-remaining)}`}</span>
             </span>
-            <span className="mt-1 mb-2 block text-sm font-bold">
+            <span className="mt-1.5 mb-2 block font-mono text-sm font-semibold">
               {usedPct.toFixed(0)}% de {brl(result.budget)}
-              <span className={`ml-1.5 text-xs font-medium ${remaining >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
-                {remaining >= 0 ? `sobram ${brl(remaining)}` : `${brl(-remaining)} acima`}
-              </span>
             </span>
             <ProgressBar value={usedPct} tone={result.overBudget ? "danger" : "brand"} />
           </div>
-          <button type="button" onClick={() => setTab("health")} className="rounded-xl bg-surface-2 p-3 text-left transition hover:ring-1 hover:ring-brand/30">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-subtle uppercase">
-              <Gauge className="size-3.5" /> Desempenho para o seu uso
-            </span>
-            <span className="mt-1 block text-sm font-bold">
+          <button type="button" onClick={() => setTab("health")} className="p-4 text-left transition hover:bg-surface-2">
+            <span className="label-mono block text-subtle">Desempenho p/ seu uso</span>
+            <span className="mt-1.5 block font-mono text-sm font-semibold">
               {result.score}/100 · {scoreLabel(result.score)}
             </span>
             {result.fpsEstimate !== null && (
@@ -135,20 +124,19 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
         </div>
       </div>
 
-      {/* Abas */}
-      <div className="flex gap-1 overflow-x-auto rounded-xl bg-surface-2 p-1 ring-1 ring-line [scrollbar-width:none]" role="tablist">
-        {TABS.map(({ id, label, icon: Icon }) => (
+      {/* Abas sublinhadas */}
+      <div className="flex gap-6 overflow-x-auto border-b border-line [scrollbar-width:none]" role="tablist">
+        {TABS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
             role="tab"
             aria-selected={tab === id}
             onClick={() => setTab(id)}
-            className={`flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition ${tab === id ? "bg-surface text-fg shadow-sm" : "text-muted hover:text-fg"}`}
+            className={`-mb-px shrink-0 border-b-2 pb-2.5 font-mono text-[11px] font-medium tracking-[0.08em] whitespace-nowrap uppercase transition ${tab === id ? "border-brand text-fg" : "border-transparent text-subtle hover:text-fg"}`}
           >
-            <Icon className="size-3.5" />
             {label}
-            {id === "tips" && <span className="rounded-full bg-brand-soft px-1.5 text-[10px] text-brand-text">{result.insights.length}</span>}
+            {id === "tips" && <span className="ml-1.5 text-brand-text">({result.insights.length})</span>}
           </button>
         ))}
       </div>
@@ -157,38 +145,32 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
         <div>
           {tab === "parts" && (
             <div className="grid gap-4 md:grid-cols-2">
-              {result.parts.map((part) => (
-                <PartCard key={part.category} part={part} />
+              {result.parts.map((part, index) => (
+                <PartCard key={part.category} part={part} index={index} />
               ))}
             </div>
           )}
 
           {tab === "health" && (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className={`rounded-2xl border p-5 ${allOk ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-500/30 dark:bg-emerald-500/5" : "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/5"}`}>
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-                    Verificador de compatibilidade
-                  </h3>
-                  <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white dark:bg-emerald-500/20 dark:text-emerald-300">{allOk ? "100% compatível" : "Revisar"}</span>
+              <section className="border border-line bg-surface p-4">
+                <div className="mb-3 flex items-baseline justify-between gap-2">
+                  <h3 className="text-sm font-semibold">Verificador de compatibilidade</h3>
+                  <span className={`label-mono ${allOk ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{allOk ? "100% compatível" : "Revisar"}</span>
                 </div>
                 <CompatibilityList checks={result.compatibility} />
-              </div>
+              </section>
 
-              <div className="rounded-2xl border border-line bg-surface p-5">
-                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-                  <Gauge className="size-4 text-brand-text" />
-                  Estimativa de desempenho
-                </h3>
-                <div className="flex items-center gap-5">
-                  <ScoreRing score={result.score} label={scoreLabel(result.score)} size="sm" />
+              <section className="border border-line bg-surface p-4">
+                <h3 className="mb-4 text-sm font-semibold">Estimativa de desempenho</h3>
+                <div className="flex items-start gap-6">
+                  <ScoreReadout score={result.score} label={scoreLabel(result.score)} />
                   <div className="flex-1 space-y-3">
                     {result.performance.map((metric) => (
                       <div key={metric.label}>
                         <div className="mb-1 flex justify-between text-xs">
                           <span className="text-muted">{metric.label}</span>
-                          <span className="font-semibold">{metric.value}/100</span>
+                          <span className="font-mono">{metric.value}</span>
                         </div>
                         <ProgressBar value={metric.value} />
                       </div>
@@ -196,69 +178,55 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
                   </div>
                 </div>
                 {gaming && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {result.fpsEstimate !== null && (
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
-                        <Activity className="size-3.5 text-brand-text" />~{result.fpsEstimate} FPS em AAA · {RESOLUTION_LABEL[input.resolution]}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
-                      <Target className="size-3.5 text-brand-text" />
-                      {bottleneckPct <= 10 ? "Gargalo CPU/GPU baixo" : `Gargalo de CPU ~${bottleneckPct}%`}
-                    </span>
-                  </div>
+                  <dl className="mt-5 grid grid-cols-2 border-t border-line pt-3 text-xs">
+                    <div>
+                      <dt className="label-mono text-subtle">FPS em AAA</dt>
+                      <dd className="mt-0.5 font-mono font-semibold">{result.fpsEstimate !== null ? `~${result.fpsEstimate} · ${RESOLUTION_LABEL[input.resolution]}` : "—"}</dd>
+                    </div>
+                    <div>
+                      <dt className="label-mono text-subtle">Gargalo CPU/GPU</dt>
+                      <dd className="mt-0.5 font-mono font-semibold">{bottleneckPct <= 10 ? "Baixo" : `~${bottleneckPct}%`}</dd>
+                    </div>
+                  </dl>
                 )}
-              </div>
+              </section>
 
-              <div className="rounded-2xl border border-line bg-surface p-5 md:col-span-2">
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                  <Wallet className="size-4 text-brand-text" />
-                  Para onde vai o dinheiro
-                </h3>
-                <div className="flex h-3 w-full overflow-hidden rounded-full bg-surface-2">
-                  {result.parts
-                    .filter((part) => part.price > 0)
-                    .map((part) => (
-                      <div key={part.category} className={`h-full ${CATEGORY_UI[part.category].bar}`} style={{ width: `${(part.price / result.total) * 100}%` }} title={`${CATEGORY_LABEL[part.category]}: ${brl(part.price)}`} />
-                    ))}
+              <section className="border border-line bg-surface p-4 md:col-span-2">
+                <h3 className="mb-3 text-sm font-semibold">Para onde vai o dinheiro</h3>
+                <div className="flex h-3 w-full gap-0.5">
+                  {paidParts.map((part) => (
+                    <div key={part.category} className={`h-full ${CATEGORY_UI[part.category].bar}`} style={{ width: `${(part.price / result.total) * 100}%` }} title={`${CATEGORY_LABEL[part.category]}: ${brl(part.price)}`} />
+                  ))}
                 </div>
-                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
-                  {result.parts
-                    .filter((part) => part.price > 0)
-                    .map((part) => (
-                      <div key={part.category} className="flex items-center gap-1.5 text-[11px] text-muted">
-                        <span className={`size-2 shrink-0 rounded-full ${CATEGORY_UI[part.category].bar}`} />
-                        <span className="truncate">{CATEGORY_LABEL[part.category].split(" (")[0]}</span>
-                        <span className="ml-auto font-semibold text-fg">{Math.round((part.price / result.total) * 100)}%</span>
-                      </div>
-                    ))}
+                <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1.5 sm:grid-cols-4">
+                  {paidParts.map((part) => (
+                    <div key={part.category} className="flex items-center gap-2 font-mono text-[11px] text-muted">
+                      <span className={`size-2 shrink-0 ${CATEGORY_UI[part.category].bar}`} />
+                      {CATEGORY_UI[part.category].code}
+                      <span className="ml-auto text-fg">{Math.round((part.price / result.total) * 100)}%</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </section>
             </div>
           )}
 
           {tab === "tips" && (
-            <div className="rounded-2xl border border-line bg-surface p-5">
-              <p className="mb-2 text-[11px] font-semibold tracking-wider text-subtle uppercase">Como a IA entendeu o pedido</p>
-              <div className="mb-5 flex flex-wrap gap-1.5">
-                {result.interpretation.map((chip) => (
-                  <span key={chip} className="rounded-md bg-surface-2 px-2 py-1 text-[11px] font-medium text-muted">
-                    {chip}
-                  </span>
-                ))}
-              </div>
+            <section className="border border-line bg-surface p-5">
+              <p className="label-mono mb-2 text-subtle">Como a IA entendeu o pedido</p>
+              <p className="mb-5 font-mono text-xs text-muted">{result.interpretation.join("  ·  ")}</p>
               <InsightList insights={result.insights} />
-              <p className="mt-4 border-t border-line pt-3 text-[11px] text-subtle">Preços estimados de referência do mercado brasileiro. Use os links de busca para conferir o menor preço do dia.</p>
-            </div>
+              <p className="mt-5 border-t border-line pt-3 text-[11px] text-subtle">Preços estimados de referência do mercado brasileiro. Use os links de busca para conferir o menor preço do dia.</p>
+            </section>
           )}
         </div>
       </ViewTransition>
 
       {toast && (
-        <div className="fixed right-4 bottom-4 left-4 z-50 flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm shadow-2xl sm:left-auto">
-          <CircleCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        <div className="fixed right-4 bottom-4 left-4 z-50 flex items-center gap-3 border border-ink bg-ink px-4 py-3 font-mono text-xs text-canvas sm:left-auto">
+          <span className="text-copper">●</span>
           <span className="flex-1">{toast}</span>
-          <button type="button" onClick={() => setToast(null)} aria-label="Fechar aviso" className="text-subtle hover:text-fg">
+          <button type="button" onClick={() => setToast(null)} aria-label="Fechar aviso" className="opacity-60 hover:opacity-100">
             <X className="size-4" />
           </button>
         </div>
@@ -275,22 +243,26 @@ export const LOADING_STEPS = [
   "Otimizando preços dentro do orçamento",
 ];
 
+/** Carregamento em estilo de log de terminal. */
 export function LoadingState({ step, steps = LOADING_STEPS }: { step: number; steps?: string[] }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-brand/20 bg-surface px-6 py-14 shadow-sm">
-      <div className="size-16 animate-spin rounded-full border-4 border-surface-2 border-t-brand" />
-      <h2 className="mt-6 text-lg font-bold">A IA está analisando…</h2>
-      <ul className="mt-6 w-full max-w-sm space-y-3">
+    <div className="border border-ink/80 bg-surface">
+      <div className="label-mono flex items-center justify-between border-b border-line px-4 py-2 text-subtle">
+        <span>smartbuild — análise</span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-1.5 animate-pulse bg-copper" />
+          processando
+        </span>
+      </div>
+      <ul className="space-y-2 p-5 font-mono text-[13px]">
         {steps.map((label, index) => (
-          <li key={label} className={`flex items-center gap-3 text-sm transition ${index <= step ? "text-fg" : "text-subtle"}`}>
-            {index < step ? (
-              <CircleCheck className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            ) : index === step ? (
-              <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-surface-2 border-t-brand" />
-            ) : (
-              <span className="size-4 shrink-0 rounded-full border border-line" />
-            )}
-            {label}
+          <li key={label} className={`flex gap-3 ${index <= step ? "text-fg" : "text-subtle/60"}`}>
+            <span className="text-brand-text">&gt;</span>
+            <span className="flex-1">
+              {label}
+              {index === step && <span className="ml-1 inline-block h-3.5 w-2 translate-y-0.5 animate-pulse bg-brand" />}
+            </span>
+            <span className={index < step ? "text-emerald-700 dark:text-emerald-400" : "text-subtle/60"}>{index < step ? "[ OK ]" : index === step ? "[ .. ]" : "[    ]"}</span>
           </li>
         ))}
       </ul>

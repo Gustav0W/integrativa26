@@ -1,43 +1,38 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import { DraftingCompass, Gamepad2, GraduationCap, MessageSquareText, Monitor, RotateCcw, SlidersHorizontal, Sparkles, Target, TriangleAlert, Volume2, Wallet, WandSparkles } from "lucide-react";
+import { ArrowRight, Monitor, RotateCcw, Volume2 } from "lucide-react";
 import { BuildResultView, LOADING_STEPS, LoadingState } from "@/components/build-result";
-import { BudgetField, ObjectivePicker, PageIntro, Panel, Segmented, ToggleRow, inputClass, primaryButton } from "@/components/ui";
+import { BudgetField, ObjectivePicker, PageIntro, Panel, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { normalizeInput, sameInput } from "@/lib/engine";
 import { useSessionState } from "@/lib/session-state";
 import type { BrandPreference, BuildInput, BuildResult } from "@/lib/types";
 
 /** Cenários prontos que preenchem o formulário e geram a build na hora (offline). */
-const PRESETS: { id: string; title: string; subtitle: string; icon: LucideIcon; input: BuildInput }[] = [
+const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput }[] = [
   {
     id: "gamer-1080p",
     title: "Gamer Entrada",
     subtitle: "1080p · R$ 4.500",
-    icon: Gamepad2,
     input: { budget: 4500, objectives: ["gaming"], resolution: "1080p", brand: "any", includePeripherals: false, silent: false, prompt: "Quero jogar Valorant e Fortnite com FPS alto e alguns AAA no médio/alto." },
   },
   {
     id: "gamer-1440p",
     title: "Gamer 1440p Ultra",
     subtitle: "1440p · R$ 9.000",
-    icon: Monitor,
     input: { budget: 9000, objectives: ["gaming"], resolution: "1440p", brand: "amd", includePeripherals: false, silent: false, prompt: "Quero rodar Baldur's Gate 3 no ultra e usar dois monitores sem travar." },
   },
   {
     id: "arq-games",
     title: "Arquitetura + Jogos",
     subtitle: "Revit/Lumion e games · R$ 12.000",
-    icon: DraftingCompass,
     input: { budget: 12000, objectives: ["arquitetura", "gaming"], resolution: "1440p", brand: "any", includePeripherals: false, silent: true, prompt: "Uso Revit e Lumion no dia a dia e jogo Cyberpunk nos fins de semana." },
   },
   {
     id: "estudos",
     title: "Home Office / Estudos",
     subtitle: "Com monitor · R$ 3.500",
-    icon: GraduationCap,
     input: { budget: 3500, objectives: ["office"], resolution: "1080p", brand: "any", includePeripherals: true, silent: false, prompt: "PC para faculdade, aulas online, Office e muitas abas no navegador." },
   },
 ];
@@ -78,20 +73,20 @@ export function AssistenteClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageIntro icon={WandSparkles} title="Assistente guiado" description="Diga quanto quer gastar e para que vai usar o PC. A IA escolhe as 7 peças, confere a compatibilidade e explica cada escolha." />
+      <PageIntro code="01" title="Assistente guiado" description="Diga quanto quer gastar e para que vai usar o PC. A IA escolhe as 7 peças, confere a compatibilidade e explica cada escolha." />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="min-w-0 space-y-4 lg:col-span-4">
-          <Panel title="Quanto você quer gastar?" icon={Wallet}>
+          <Panel index="01" title="Quanto você quer gastar?">
             <BudgetField value={form.budget} onChange={(value) => update("budget", value)} />
           </Panel>
 
-          <Panel title="Para que vai usar o PC?" icon={Target}>
+          <Panel index="02" title="Para que vai usar o PC?">
             <ObjectivePicker value={form.objectives} onChange={(value) => update("objectives", value)} resolution={form.resolution} onResolutionChange={(value) => update("resolution", value)} />
           </Panel>
 
-          <Panel title="Preferências (opcional)" icon={SlidersHorizontal}>
-            <p className="mb-2 text-xs font-medium text-muted">Marca do processador</p>
+          <Panel index="03" title="Preferências" aside={<span className="label-mono text-subtle">opcional</span>}>
+            <p className="label-mono mb-2 text-subtle">Marca do processador</p>
             <Segmented<BrandPreference>
               value={form.brand}
               onChange={(value) => update("brand", value)}
@@ -107,7 +102,7 @@ export function AssistenteClient() {
             </div>
           </Panel>
 
-          <Panel title="Algo mais? (opcional)" icon={MessageSquareText} aside={<span className="text-[11px] text-subtle">{form.prompt.length}/500</span>}>
+          <Panel index="04" title="Algo mais?" aside={<span className="label-mono text-subtle">{form.prompt.length}/500</span>}>
             <textarea
               value={form.prompt}
               onChange={(event) => update("prompt", event.target.value.slice(0, 500))}
@@ -117,9 +112,9 @@ export function AssistenteClient() {
             />
           </Panel>
 
-          <button type="button" onClick={() => void generate()} disabled={loading} className={`${primaryButton} w-full py-4 text-base`}>
-            <Sparkles className="size-5" />
+          <button type="button" onClick={() => void generate()} disabled={loading} className={`${primaryButton} w-full py-4`}>
             {loading ? "Gerando…" : "Gerar build ideal com IA"}
+            <ArrowRight className="size-4" />
           </button>
         </aside>
 
@@ -129,10 +124,10 @@ export function AssistenteClient() {
           ) : result ? (
             <>
               {isStale && (
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                  <TriangleAlert className="size-4 shrink-0" />
-                  <span className="flex-1">Você mudou as opções. Gere de novo para atualizar a recomendação.</span>
-                  <button type="button" onClick={() => void generate()} className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-3 py-1.5 text-xs font-semibold hover:bg-amber-500/25">
+                <div className="flex flex-wrap items-center gap-3 border border-l-4 border-line border-l-copper bg-surface px-4 py-3 text-sm">
+                  <span className="label-mono text-copper">[Atenção]</span>
+                  <span className="flex-1 text-muted">Você mudou as opções. Gere de novo para atualizar a recomendação.</span>
+                  <button type="button" onClick={() => void generate()} className={secondaryButton}>
                     <RotateCcw className="size-3.5" />
                     Atualizar
                   </button>
@@ -141,36 +136,31 @@ export function AssistenteClient() {
               <BuildResultView result={result} onRegenerate={() => void generate()} />
             </>
           ) : (
-            <div className="rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-12 text-center">
-              <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-brand-from to-brand-to shadow-lg shadow-brand/25">
-                <WandSparkles className="size-8 text-on-brand" />
-              </span>
-              <h2 className="mt-5 text-xl font-bold">Sua build ideal aparece aqui</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted">Preencha ao lado e clique em gerar — ou experimente um dos cenários prontos:</p>
-              <div className="mx-auto mt-8 grid max-w-2xl gap-3 text-left sm:grid-cols-2">
-                {PRESETS.map((preset) => {
-                  const Icon = preset.icon;
-                  return (
+            <div className="border border-dashed border-ink/40 px-6 py-12">
+              <p className="label-mono text-subtle">Saída — aguardando parâmetros</p>
+              <h2 className="heading mt-3 text-2xl">Sua build ideal aparece aqui.</h2>
+              <p className="mt-2 max-w-md text-sm text-muted">Preencha ao lado e clique em gerar — ou experimente um dos cenários prontos:</p>
+              <ul className="mt-8 border-t border-line">
+                {PRESETS.map((preset, index) => (
+                  <li key={preset.id}>
                     <button
-                      key={preset.id}
                       type="button"
                       onClick={() => {
                         setForm(preset.input);
                         void generate(preset.input);
                       }}
-                      className="group flex items-center gap-3 rounded-xl border border-line bg-surface p-3 transition hover:border-brand/50"
+                      className="group grid w-full grid-cols-[2rem_1fr_auto] items-baseline gap-3 border-b border-line px-1 py-3.5 text-left transition hover:bg-surface"
                     >
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 transition group-hover:bg-brand-soft">
-                        <Icon className="size-5 text-muted group-hover:text-brand-text" />
-                      </span>
-                      <span className="min-w-0">
+                      <span className="font-mono text-xs text-brand-text">{String.fromCharCode(65 + index)}</span>
+                      <span>
                         <span className="block text-sm font-semibold">{preset.title}</span>
-                        <span className="block text-xs text-subtle">{preset.subtitle}</span>
+                        <span className="block font-mono text-[11px] text-subtle">{preset.subtitle}</span>
                       </span>
+                      <ArrowRight className="size-4 self-center text-subtle transition group-hover:translate-x-1 group-hover:text-brand-text" />
                     </button>
-                  );
-                })}
-              </div>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </section>

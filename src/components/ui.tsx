@@ -2,30 +2,31 @@
 
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
-import { CircleCheck, CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, GraduationCap, HardDrive, Info, MemoryStick, Monitor, TriangleAlert, Zap } from "lucide-react";
+import { CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, GraduationCap, HardDrive, MemoryStick, Monitor, Zap } from "lucide-react";
 import { BUDGET_MAX, BUDGET_MIN } from "@/lib/catalog";
 import { brl, clampBudget } from "@/lib/engine";
 import type { InsightTone, Objective, PartCategory, Resolution } from "@/lib/types";
+import { inputClass } from "./styles";
 
 /* ----------------------------------------------------------------------------
- * Cores por categoria de peça (claro / escuro)
+ * Categorias de peça: código curto (estilo ficha técnica) + cor da barra de custo
  * --------------------------------------------------------------------------*/
 
-export const CATEGORY_UI: Record<PartCategory, { icon: LucideIcon; text: string; box: string; bar: string }> = {
-  cpu: { icon: Cpu, text: "text-violet-700 dark:text-violet-300", box: "bg-violet-100 ring-violet-200 dark:bg-violet-500/10 dark:ring-violet-500/30", bar: "bg-violet-500" },
-  gpu: { icon: Gpu, text: "text-blue-700 dark:text-blue-300", box: "bg-blue-100 ring-blue-200 dark:bg-blue-500/10 dark:ring-blue-500/30", bar: "bg-blue-500" },
-  mobo: { icon: CircuitBoard, text: "text-cyan-700 dark:text-cyan-300", box: "bg-cyan-100 ring-cyan-200 dark:bg-cyan-500/10 dark:ring-cyan-500/30", bar: "bg-cyan-500" },
-  ram: { icon: MemoryStick, text: "text-fuchsia-700 dark:text-fuchsia-300", box: "bg-fuchsia-100 ring-fuchsia-200 dark:bg-fuchsia-500/10 dark:ring-fuchsia-500/30", bar: "bg-fuchsia-500" },
-  ssd: { icon: HardDrive, text: "text-emerald-700 dark:text-emerald-300", box: "bg-emerald-100 ring-emerald-200 dark:bg-emerald-500/10 dark:ring-emerald-500/30", bar: "bg-emerald-500" },
-  psu: { icon: Zap, text: "text-amber-700 dark:text-amber-300", box: "bg-amber-100 ring-amber-200 dark:bg-amber-500/10 dark:ring-amber-500/30", bar: "bg-amber-500" },
-  case: { icon: Fan, text: "text-zinc-700 dark:text-zinc-300", box: "bg-zinc-100 ring-zinc-200 dark:bg-zinc-500/10 dark:ring-zinc-500/30", bar: "bg-zinc-400" },
-  extra: { icon: Monitor, text: "text-pink-700 dark:text-pink-300", box: "bg-pink-100 ring-pink-200 dark:bg-pink-500/10 dark:ring-pink-500/30", bar: "bg-pink-500" },
+export const CATEGORY_UI: Record<PartCategory, { icon: LucideIcon; code: string; bar: string }> = {
+  cpu: { icon: Cpu, code: "CPU", bar: "bg-brand" },
+  gpu: { icon: Gpu, code: "GPU", bar: "bg-copper" },
+  mobo: { icon: CircuitBoard, code: "MB", bar: "bg-ink" },
+  ram: { icon: MemoryStick, code: "RAM", bar: "bg-brand/55" },
+  ssd: { icon: HardDrive, code: "SSD", bar: "bg-copper/55" },
+  psu: { icon: Zap, code: "PSU", bar: "bg-ink/45" },
+  case: { icon: Fan, code: "CASE", bar: "bg-subtle/60" },
+  extra: { icon: Monitor, code: "EXT", bar: "bg-brand/25" },
 };
 
-export const TONE_UI: Record<InsightTone, { icon: LucideIcon; text: string; box: string }> = {
-  success: { icon: CircleCheck, text: "text-emerald-600 dark:text-emerald-400", box: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/5" },
-  info: { icon: Info, text: "text-blue-600 dark:text-blue-400", box: "border-blue-200 bg-blue-50 dark:border-blue-500/30 dark:bg-blue-500/5" },
-  warning: { icon: TriangleAlert, text: "text-amber-600 dark:text-amber-400", box: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/5" },
+export const TONE_UI: Record<InsightTone, { tag: string; text: string; rule: string }> = {
+  success: { tag: "OK", text: "text-emerald-700 dark:text-emerald-400", rule: "border-l-emerald-700 dark:border-l-emerald-400" },
+  info: { tag: "INFO", text: "text-muted", rule: "border-l-ink/50" },
+  warning: { tag: "ATENÇÃO", text: "text-copper", rule: "border-l-copper" },
 };
 
 export const OBJECTIVES: { id: Objective; title: string; description: string; icon: LucideIcon }[] = [
@@ -39,56 +40,49 @@ export const OBJECTIVES: { id: Objective; title: string; description: string; ic
  * Primitivos
  * --------------------------------------------------------------------------*/
 
-export const primaryButton =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-brand-from to-brand-to px-5 py-3 text-sm font-bold text-on-brand shadow-lg shadow-brand/25 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60";
-export const secondaryButton =
-  "inline-flex items-center justify-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-2 text-xs font-semibold text-fg transition hover:border-brand/50 disabled:cursor-not-allowed disabled:opacity-50";
-export const inputClass =
-  "w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-fg outline-none transition placeholder:text-subtle focus:border-brand focus:ring-2 focus:ring-brand/20";
+export { inputClass, primaryButton, secondaryButton } from "./styles";
 
-export function PageIntro({ icon: Icon, title, description, children }: { icon: LucideIcon; title: string; description: string; children?: ReactNode }) {
+/** Cabeçalho de página: rótulo técnico + título largo + descrição curta. */
+export function PageIntro({ code, title, description, children }: { code: string; title: string; description: string; children?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex items-start gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-brand-soft">
-          <Icon className="size-5 text-brand-text" />
-        </span>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>
-        </div>
+    <div className="mb-8 flex flex-col gap-4 border-b border-ink/80 pb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="label-mono text-brand-text">Ferramenta {code}</p>
+        <h1 className="heading mt-2 text-3xl sm:text-4xl">{title}</h1>
+        <p className="mt-3 max-w-2xl text-sm text-muted">{description}</p>
       </div>
       {children}
     </div>
   );
 }
 
-export function Panel({ title, icon: Icon, children, aside, className = "" }: { title?: string; icon?: LucideIcon; children: ReactNode; aside?: ReactNode; className?: string }) {
+/** Bloco com cabeçalho numerado, como uma seção de ficha técnica. */
+export function Panel({ index, title, children, aside, className = "" }: { index?: string; title?: string; children: ReactNode; aside?: ReactNode; className?: string }) {
   return (
-    <section className={`rounded-2xl border border-line bg-surface p-5 shadow-sm ${className}`}>
+    <section className={`border border-line bg-surface ${className}`}>
       {title && (
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            {Icon && <Icon className="size-4 text-brand-text" />}
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+          <h2 className="flex items-baseline gap-2.5 text-sm font-semibold">
+            {index && <span className="font-mono text-[11px] font-medium text-brand-text">{index}</span>}
             {title}
           </h2>
           {aside}
         </div>
       )}
-      {children}
+      <div className="p-4">{children}</div>
     </section>
   );
 }
 
 export function Segmented<T extends string>({ options, value, onChange }: { options: { id: T; label: string }[]; value: T; onChange: (value: T) => void }) {
   return (
-    <div className="grid rounded-xl bg-surface-2 p-1 ring-1 ring-line" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div className="grid gap-0.5 border border-line bg-surface-2 p-0.5" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
       {options.map((option) => (
         <button
           key={option.id}
           type="button"
           onClick={() => onChange(option.id)}
-          className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition ${value === option.id ? "bg-linear-to-r from-brand-from to-brand-to text-on-brand shadow" : "text-muted hover:text-fg"}`}
+          className={`px-2 py-1.5 font-mono text-[11px] font-medium tracking-wide uppercase transition ${value === option.id ? "bg-ink text-canvas" : "text-muted hover:text-fg"}`}
         >
           {option.label}
         </button>
@@ -104,52 +98,44 @@ export function ToggleRow({ icon: Icon, label, description, checked, onChange }:
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition ${checked ? "border-brand/50 bg-brand-soft" : "border-line bg-surface hover:border-brand/30"}`}
+      className={`flex w-full items-center gap-3 border p-3 text-left transition ${checked ? "border-brand bg-brand-soft" : "border-line hover:border-ink/40"}`}
     >
-      <Icon className={`size-4 shrink-0 ${checked ? "text-brand-text" : "text-subtle"}`} />
+      <Icon className={`size-4 shrink-0 ${checked ? "text-brand-text" : "text-subtle"}`} strokeWidth={1.75} />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{label}</span>
         <span className="block text-xs text-subtle">{description}</span>
       </span>
-      <span className={`relative h-5 w-9 shrink-0 rounded-full transition ${checked ? "bg-brand" : "bg-zinc-300 dark:bg-zinc-700"}`}>
-        <span className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-all ${checked ? "left-4.5" : "left-0.5"}`} />
+      {/* Chave liga/desliga quadrada */}
+      <span className={`relative h-5 w-9 shrink-0 border transition ${checked ? "border-brand bg-brand" : "border-ink/40 bg-surface-2"}`}>
+        <span className={`absolute top-0.5 size-3.5 transition-all ${checked ? "left-4.5 bg-on-brand" : "left-0.5 bg-ink/60"}`} />
       </span>
     </button>
   );
 }
 
-export function ProgressBar({ value, tone = "brand" }: { value: number; tone?: "brand" | "danger" }) {
-  const color = tone === "danger" ? "bg-linear-to-r from-rose-500 to-orange-500" : "bg-linear-to-r from-brand-from to-brand-to";
+/** Medidor em segmentos, como uma barra de LEDs. */
+export function ProgressBar({ value, tone = "brand", segments = 24 }: { value: number; tone?: "brand" | "danger"; segments?: number }) {
+  const filled = Math.round((Math.max(0, Math.min(100, value)) / 100) * segments);
+  const on = tone === "danger" ? "bg-rose-600 dark:bg-rose-500" : "bg-brand";
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-surface-2 ring-1 ring-line">
-      <div className={`h-full rounded-full ${color} transition-all duration-700`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    <div className="flex h-2.5 w-full gap-0.5" role="meter" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100}>
+      {Array.from({ length: segments }, (_, i) => (
+        <span key={i} className={`flex-1 transition-colors duration-500 ${i < filled ? on : "bg-surface-2"}`} />
+      ))}
     </div>
   );
 }
 
-export function ScoreRing({ score, label, size = "lg" }: { score: number; label: string; size?: "lg" | "sm" }) {
-  const radius = 42;
-  const circumference = 2 * Math.PI * radius;
+/** Leitura numérica grande da nota (0–100). */
+export function ScoreReadout({ score, label, caption }: { score: number; label: string; caption?: string }) {
   return (
-    <div className={`relative shrink-0 ${size === "lg" ? "size-28" : "size-20"}`}>
-      <svg viewBox="0 0 100 100" className="size-full -rotate-90">
-        <circle cx="50" cy="50" r={radius} fill="none" strokeWidth="9" className="stroke-surface-2" />
-        <circle
-          cx="50"
-          cy="50"
-          r={radius}
-          fill="none"
-          strokeWidth="9"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - Math.max(0, Math.min(100, score)) / 100)}
-          className="stroke-brand transition-all duration-1000"
-        />
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`font-bold ${size === "lg" ? "text-3xl" : "text-xl"}`}>{score}</span>
-        <span className="text-[10px] font-medium text-muted">{label}</span>
-      </div>
+    <div className="shrink-0">
+      {caption && <p className="label-mono text-subtle">{caption}</p>}
+      <p className="font-mono text-4xl leading-none font-semibold tracking-tight">
+        {score}
+        <span className="text-base font-normal text-subtle">/100</span>
+      </p>
+      <p className="label-mono mt-1.5 text-brand-text">{label}</p>
     </div>
   );
 }
@@ -179,8 +165,9 @@ export function ObjectivePicker({
   };
 
   return (
-    <div>
-      <div className={`grid gap-2.5 ${compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
+    <div className="@container">
+      {/* 4 colunas só quando o próprio bloco é largo o bastante (não a tela inteira) */}
+      <div className={`grid gap-2 ${compact ? "grid-cols-2 @xl:grid-cols-4" : "grid-cols-2"}`}>
         {OBJECTIVES.map((item) => {
           const Icon = item.icon;
           const active = value.includes(item.id);
@@ -190,20 +177,17 @@ export function ObjectivePicker({
               type="button"
               onClick={() => toggle(item.id)}
               aria-pressed={active}
-              className={`relative flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition ${active ? "border-brand/60 bg-brand-soft" : "border-line bg-surface hover:border-brand/30"}`}
+              className={`flex min-w-0 flex-col items-start gap-2.5 border p-3 text-left transition ${active ? "border-brand bg-brand-soft" : "border-line hover:border-ink/40"}`}
             >
-              <span
-                className={`absolute top-2.5 right-2.5 flex size-4 items-center justify-center rounded border text-[10px] ${active ? "border-brand bg-brand text-on-brand" : "border-line bg-surface"}`}
-                aria-hidden
-              >
-                {active && "✓"}
-              </span>
-              <span className={`flex size-8 items-center justify-center rounded-lg ${active ? "bg-brand text-on-brand" : "bg-surface-2 text-muted"}`}>
-                <Icon className="size-4" />
+              <span className="flex w-full items-center justify-between">
+                <Icon className={`size-4 ${active ? "text-brand-text" : "text-subtle"}`} strokeWidth={1.75} />
+                <span className={`flex size-3.5 items-center justify-center border text-[9px] leading-none ${active ? "border-brand bg-brand text-on-brand" : "border-ink/40"}`} aria-hidden>
+                  {active && "✓"}
+                </span>
               </span>
               <span>
-                <span className="block pr-4 text-sm leading-tight font-semibold">{item.title}</span>
-                {!compact && <span className="mt-0.5 block text-[11px] text-subtle">{item.description}</span>}
+                <span className="block text-sm leading-tight font-semibold hyphens-auto [overflow-wrap:anywhere]">{item.title}</span>
+                {!compact && <span className="mt-1 block text-[11px] text-subtle">{item.description}</span>}
               </span>
             </button>
           );
@@ -212,7 +196,7 @@ export function ObjectivePicker({
       <p className="mt-2 text-[11px] text-subtle">Pode marcar mais de um — a IA equilibra a build para todos os usos.</p>
       {value.includes("gaming") && (
         <div className="mt-4">
-          <p className="mb-2 text-xs font-medium text-muted">Resolução para jogos</p>
+          <p className="label-mono mb-2 text-subtle">Resolução para jogos</p>
           <Segmented<Resolution>
             value={resolution}
             onChange={onResolutionChange}
@@ -228,12 +212,14 @@ export function ObjectivePicker({
   );
 }
 
+const BUDGET_TICKS = [2000, 5000, 10000, 15000, 20000];
+
 export function BudgetField({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const clamped = clampBudget(value);
   return (
     <div>
-      <div className="relative">
-        <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm font-semibold text-subtle">R$</span>
+      <div className="flex items-baseline gap-2 border-b border-ink/70 pb-1 focus-within:border-brand">
+        <span className="font-mono text-lg text-subtle">R$</span>
         <input
           type="number"
           inputMode="numeric"
@@ -244,7 +230,7 @@ export function BudgetField({ value, onChange }: { value: number; onChange: (val
           onChange={(event) => onChange(Number(event.target.value))}
           onBlur={() => onChange(clamped)}
           aria-label="Orçamento máximo em reais"
-          className={`${inputClass} pl-10 text-lg font-bold`}
+          className="w-full bg-transparent font-mono text-3xl font-semibold tracking-tight outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
       </div>
       <input
@@ -255,38 +241,39 @@ export function BudgetField({ value, onChange }: { value: number; onChange: (val
         value={clamped}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-label="Ajustar orçamento"
-        className="mt-4 w-full cursor-pointer accent-brand"
+        className="mt-5 w-full cursor-pointer accent-brand"
       />
-      <div className="mt-1 flex justify-between text-[11px] text-subtle">
-        <span>{brl(BUDGET_MIN)}</span>
-        <span>{brl(BUDGET_MAX)}</span>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {[3000, 5000, 8000, 12000, 20000].map((preset) => (
-          <button
-            key={preset}
-            type="button"
-            onClick={() => onChange(preset)}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${clamped === preset ? "bg-brand-soft text-brand-text ring-1 ring-brand/40" : "bg-surface-2 text-muted hover:text-fg"}`}
-          >
-            {preset / 1000} mil
-          </button>
-        ))}
+      {/* Régua com marcações */}
+      <div className="relative mt-1 h-5">
+        {BUDGET_TICKS.map((tick) => {
+          const left = ((tick - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * 100;
+          return (
+            <button
+              key={tick}
+              type="button"
+              onClick={() => onChange(tick)}
+              style={{ left: `${left}%` }}
+              className={`absolute -translate-x-1/2 font-mono text-[10px] transition first:translate-x-0 last:-translate-x-full ${clamped === tick ? "text-brand-text" : "text-subtle hover:text-fg"}`}
+              title={`Usar ${brl(tick)}`}
+            >
+              {tick / 1000}k
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
+/** Lista de verificações como linhas de tabela com status. */
 export function CompatibilityList({ checks }: { checks: { label: string; detail: string; ok: boolean }[] }) {
   return (
-    <ul className="space-y-2">
+    <ul className="divide-y divide-line border-y border-line">
       {checks.map((check) => (
-        <li key={check.label} className="flex items-start gap-2.5 text-xs">
-          {check.ok ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400" /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-400" />}
-          <span className="min-w-0">
-            <span className="font-semibold">{check.label}</span>
-            <span className="text-muted"> · {check.detail}</span>
-          </span>
+        <li key={check.label} className="flex items-start gap-3 py-2 text-xs">
+          <span className="label-mono w-24 shrink-0 pt-px text-subtle">{check.label}</span>
+          <span className="min-w-0 flex-1 text-muted">{check.detail}</span>
+          <span className={`label-mono shrink-0 pt-px ${check.ok ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{check.ok ? "OK" : "Falha"}</span>
         </li>
       ))}
     </ul>
@@ -295,12 +282,12 @@ export function CompatibilityList({ checks }: { checks: { label: string; detail:
 
 export function InsightList({ insights }: { insights: { tone: InsightTone; text: string }[] }) {
   return (
-    <ul className="space-y-2.5">
+    <ul className="space-y-3">
       {insights.map((insight) => {
-        const { icon: Icon, text } = TONE_UI[insight.tone];
+        const tone = TONE_UI[insight.tone];
         return (
-          <li key={insight.text} className="flex items-start gap-2.5 text-sm leading-relaxed">
-            <Icon className={`mt-0.5 size-4 shrink-0 ${text}`} />
+          <li key={insight.text} className="flex items-baseline gap-3 text-sm leading-relaxed">
+            <span className={`label-mono w-16 shrink-0 ${tone.text}`}>[{tone.tag}]</span>
             <span>{insight.text}</span>
           </li>
         );

@@ -2,10 +2,10 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ClipboardType, FileSearch, FileText, FileUp, ScanSearch, Sparkles, Target, TriangleAlert, Upload, X } from "lucide-react";
+import { ArrowRight, Upload, X } from "lucide-react";
 import { EvaluationPanel } from "@/components/evaluation-panel";
 import { LoadingState } from "@/components/build-result";
-import { ObjectivePicker, PageIntro, Panel, Segmented, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, Segmented, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { extractPdfText, sleep } from "@/lib/api";
 import { BUDGET_MAX, BUDGET_MIN } from "@/lib/catalog";
 import { RESOLUTION_LABEL, brl, computeLocalBuild, evaluateBuild, type BuildEvaluation } from "@/lib/engine";
@@ -108,15 +108,15 @@ export function AnalisarClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageIntro icon={FileSearch} title="Analisar orçamento em PDF" description="Envie o orçamento de uma loja, a ficha técnica de um PC pronto ou de um usado. A IA identifica as peças e diz se valem a pena para o seu uso." />
+      <PageIntro code="04" title="Analisar orçamento em PDF" description="Envie o orçamento de uma loja, a ficha técnica de um PC pronto ou de um usado. A IA identifica as peças e diz se valem a pena para o seu uso." />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="min-w-0 space-y-4 lg:col-span-5">
-          <Panel title="Para que vai usar o PC?" icon={Target}>
+          <Panel index="01" title="Para que vai usar o PC?">
             <ObjectivePicker value={objectives} onChange={setObjectives} resolution={resolution} onResolutionChange={setResolution} compact />
           </Panel>
 
-          <Panel title="Documento" icon={FileText}>
+          <Panel index="02" title="Documento">
             <Segmented<Mode>
               value={mode}
               onChange={setMode}
@@ -138,15 +138,15 @@ export function AnalisarClient() {
                   setDragging(false);
                   pickFile(event.dataTransfer.files[0]);
                 }}
-                className={`mt-4 flex flex-col items-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition ${dragging ? "border-brand bg-brand-soft" : "border-line bg-surface-2"}`}
+                className={`mt-4 flex flex-col items-center border border-dashed px-4 py-8 text-center transition ${dragging ? "border-brand bg-brand-soft" : "border-ink/40"}`}
               >
                 <input ref={fileInput} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(event) => pickFile(event.target.files?.[0])} />
                 {file ? (
-                  <div className="flex w-full items-center gap-3 rounded-lg bg-surface p-3 text-left ring-1 ring-line">
-                    <FileText className="size-5 shrink-0 text-brand-text" />
+                  <div className="flex w-full items-center gap-3 border border-line bg-surface p-3 text-left">
+                    <span className="label-mono shrink-0 bg-ink px-1.5 py-0.5 text-canvas">PDF</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium">{file.name}</span>
-                      <span className="block text-xs text-subtle">{(file.size / 1024).toFixed(0)} KB</span>
+                      <span className="block font-mono text-[11px] text-subtle">{(file.size / 1024).toFixed(0)} KB</span>
                     </span>
                     <button type="button" onClick={() => setFile(null)} aria-label="Remover arquivo" className="text-subtle hover:text-fg">
                       <X className="size-4" />
@@ -154,37 +154,34 @@ export function AnalisarClient() {
                   </div>
                 ) : (
                   <>
-                    <Upload className="size-8 text-subtle" />
+                    <Upload className="size-6 text-subtle" strokeWidth={1.5} />
                     <p className="mt-3 text-sm font-medium">Arraste o PDF aqui</p>
-                    <p className="text-xs text-subtle">ou</p>
-                    <button type="button" onClick={() => fileInput.current?.click()} className={`${secondaryButton} mt-2`}>
-                      <FileUp className="size-3.5" />
+                    <button type="button" onClick={() => fileInput.current?.click()} className={`${secondaryButton} mt-3`}>
                       Escolher arquivo
                     </button>
-                    <p className="mt-3 text-[11px] text-subtle">Até 10MB. PDFs escaneados (imagem) não têm texto legível.</p>
+                    <p className="mt-3 font-mono text-[10px] text-subtle">Até 10MB · PDFs escaneados (imagem) não têm texto legível</p>
                   </>
                 )}
               </div>
             ) : (
               <div className="mt-4">
                 <textarea value={pasted} onChange={(event) => setPasted(event.target.value)} rows={9} placeholder="Cole aqui a lista de peças do orçamento ou da ficha técnica…" className={`${inputClass} resize-y font-mono text-xs`} />
-                <button type="button" onClick={() => setPasted(SAMPLE_QUOTE)} className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-brand-text hover:underline">
-                  <ClipboardType className="size-3.5" />
+                <button type="button" onClick={() => setPasted(SAMPLE_QUOTE)} className="label-mono mt-2 text-brand-text underline-offset-2 hover:underline">
                   Usar um orçamento de exemplo
                 </button>
               </div>
             )}
 
             {error && (
-              <p className="mt-3 flex items-start gap-1.5 text-xs text-rose-600 dark:text-rose-400">
-                <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+              <p className="mt-3 flex items-baseline gap-2 text-xs text-rose-600 dark:text-rose-400">
+                <span className="label-mono shrink-0">[Erro]</span>
                 {error}
               </p>
             )}
 
             <button type="button" onClick={() => void analyze()} disabled={!canAnalyze || loading} className={`${primaryButton} mt-4 w-full`}>
-              <ScanSearch className="size-4" />
               {loading ? "Analisando…" : "Analisar com IA"}
+              <ArrowRight className="size-4" />
             </button>
           </Panel>
         </aside>
@@ -194,71 +191,70 @@ export function AnalisarClient() {
             <LoadingState step={step} steps={STEPS} />
           ) : analysis ? (
             <>
-              <div className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-2">
+              <section className="border border-ink/80 bg-surface">
+                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">
                   <div>
                     <h2 className="text-sm font-semibold">O que a IA encontrou</h2>
-                    <p className="text-xs text-subtle">{analysis.source}</p>
+                    <p className="font-mono text-[11px] text-subtle">{analysis.source}</p>
                   </div>
-                  {analysis.specs.totalPrice !== null && <span className="rounded-full bg-surface-2 px-3 py-1 text-sm font-bold">Total: {brl(analysis.specs.totalPrice)}</span>}
+                  {analysis.specs.totalPrice !== null && <span className="font-mono text-lg font-semibold">{brl(analysis.specs.totalPrice)}</span>}
                 </div>
-                {analysis.specs.found.length > 0 ? (
-                  <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                    {analysis.specs.found.map((item) => (
-                      <li key={item.category} className="rounded-xl bg-surface-2 px-3 py-2">
-                        <span className="block text-[11px] font-semibold text-subtle uppercase">{item.category}</span>
-                        <span className="text-sm font-medium">{item.label}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-4 text-sm text-muted">Nenhuma peça reconhecida. Confira se o documento lista processador, placa de vídeo, memória etc.</p>
-                )}
-                {analysis.specs.unknown.length > 0 && (
-                  <p className="mt-3 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-300">
-                    <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
-                    Citado, mas fora da base da IA: {analysis.specs.unknown.join(", ")}. A avaliação desses itens fica parcial.
-                  </p>
-                )}
-                <button type="button" onClick={() => setShowText((value) => !value)} className="mt-3 text-xs font-medium text-brand-text hover:underline">
-                  {showText ? "Ocultar texto lido" : "Ver texto lido do documento"}
-                </button>
-                {showText && <pre className="mt-2 max-h-60 overflow-auto rounded-lg bg-surface-2 p-3 text-[11px] whitespace-pre-wrap text-muted">{analysis.text}</pre>}
-              </div>
+                <div className="p-4">
+                  {analysis.specs.found.length > 0 ? (
+                    <dl className="divide-y divide-line border-y border-line">
+                      {analysis.specs.found.map((item) => (
+                        <div key={item.category} className="flex items-baseline gap-3 py-2 text-sm">
+                          <dt className="label-mono w-28 shrink-0 text-subtle">{item.category}</dt>
+                          <dd className="font-medium">{item.label}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-muted">Nenhuma peça reconhecida. Confira se o documento lista processador, placa de vídeo, memória etc.</p>
+                  )}
+                  {analysis.specs.unknown.length > 0 && (
+                    <p className="mt-3 flex items-baseline gap-2 text-xs text-muted">
+                      <span className="label-mono shrink-0 text-copper">[Atenção]</span>
+                      Citado, mas fora da base da IA: {analysis.specs.unknown.join(", ")}. A avaliação desses itens fica parcial.
+                    </p>
+                  )}
+                  <button type="button" onClick={() => setShowText((value) => !value)} className="label-mono mt-3 text-brand-text underline-offset-2 hover:underline">
+                    {showText ? "Ocultar texto lido" : "Ver texto lido do documento"}
+                  </button>
+                  {showText && <pre className="mt-2 max-h-60 overflow-auto border border-line bg-surface-2 p-3 text-[11px] whitespace-pre-wrap text-muted">{analysis.text}</pre>}
+                </div>
+              </section>
 
               <EvaluationPanel evaluation={analysis.evaluation} resolutionLabel={RESOLUTION_LABEL[analysis.resolution]} />
 
               {analysis.alternative && (
-                <div className="rounded-2xl border border-brand/30 bg-surface p-5">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <Sparkles className="size-4 text-brand-text" />
-                    Pelo mesmo valor, a IA montaria:
-                  </h3>
-                  <p className="mt-1 text-xs text-muted">
+                <section className="border border-line bg-surface p-4">
+                  <p className="label-mono text-brand-text">Pelo mesmo valor, a IA montaria</p>
+                  <p className="mt-1.5 text-sm text-muted">
                     Build de {brl(analysis.alternative.total)} com nota {analysis.alternative.score}/100 para o seu uso
                     {analysis.evaluation.overall !== null ? ` (a do documento ficou em ${analysis.evaluation.overall}/100)` : ""}.
                   </p>
-                  <ul className="mt-3 space-y-1 text-xs">
+                  <ul className="mt-3 divide-y divide-line border-y border-line text-xs">
                     {analysis.alternative.parts.map((part) => (
-                      <li key={part.category} className="flex justify-between gap-2">
-                        <span className="truncate">{part.name}</span>
-                        <span className="shrink-0 text-subtle">{part.price > 0 ? brl(part.price) : "incluso"}</span>
+                      <li key={part.category} className="flex items-baseline gap-3 py-1.5">
+                        <span className="label-mono w-10 shrink-0 text-subtle">{CATEGORY_UI[part.category].code}</span>
+                        <span className="min-w-0 flex-1 truncate">{part.name}</span>
+                        <span className="shrink-0 font-mono text-subtle">{part.price > 0 ? brl(part.price) : "incluso"}</span>
                       </li>
                     ))}
                   </ul>
                   <button type="button" onClick={() => analysis.alternative && openInAssistant(analysis.alternative)} className={`${secondaryButton} mt-4`}>
                     Ver detalhes e preços no Assistente
+                    <ArrowRight className="size-3.5" />
                   </button>
-                </div>
+                </section>
               )}
             </>
           ) : (
-            <div className="rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-14 text-center">
-              <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-brand-from to-brand-to shadow-lg shadow-brand/25">
-                <FileSearch className="size-8 text-on-brand" />
-              </span>
-              <h2 className="mt-5 text-xl font-bold">O parecer da IA aparece aqui</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+            <div className="border border-dashed border-ink/40 px-6 py-12">
+              <p className="label-mono text-subtle">Saída — aguardando documento</p>
+              <h2 className="heading mt-3 text-2xl">O parecer da IA aparece aqui.</h2>
+              <p className="mt-2 max-w-md text-sm text-muted">
                 Ela lista as peças encontradas, aponta incompatibilidades (fonte fraca, memória errada…), diz se serve para o seu uso e compara com o que daria para montar pelo mesmo preço.
               </p>
             </div>

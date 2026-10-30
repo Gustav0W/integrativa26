@@ -1,85 +1,70 @@
-import { Check, ExternalLink, Fan, Search, Sparkles } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { STORES, googleShoppingUrl } from "@/lib/catalog";
 import { CATEGORY_LABEL, brl } from "@/lib/engine";
 import type { RecommendedPart } from "@/lib/types";
 import { CATEGORY_UI } from "./ui";
 
-/** Links "Pesquisar menor preço" (Google Shopping) + atalhos para as lojas. */
+/** "Buscar menor preço" (Google Shopping) + atalhos discretos para as lojas. */
 export function PriceLinks({ terms }: { terms: string[] }) {
   const [primary, secondary] = terms;
-  if (!primary) {
-    return (
-      <p className="flex items-center gap-1.5 text-xs text-subtle">
-        <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
-        Já incluso no processador — nada a comprar.
-      </p>
-    );
-  }
-  const pill = "inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1.5 text-[11px] font-medium text-muted transition hover:border-brand/40 hover:text-fg";
+  if (!primary) return <p className="label-mono text-subtle">Incluso no processador — nada a comprar</p>;
+  const storeLink = "inline-flex items-center gap-0.5 font-mono text-[11px] text-muted underline-offset-2 transition hover:text-fg hover:underline";
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
       <a
         href={googleShoppingUrl(primary)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-lg bg-brand-soft px-3 py-1.5 text-xs font-semibold text-brand-text ring-1 ring-brand/25 transition hover:ring-brand/50"
+        className="inline-flex items-center gap-1 bg-brand px-2.5 py-1.5 font-mono text-[11px] font-semibold tracking-wide text-on-brand uppercase transition hover:bg-brand-hover"
       >
-        <Search className="size-3.5" />
-        Pesquisar menor preço
+        Buscar menor preço
+        <ArrowUpRight className="size-3.5" />
       </a>
-      {STORES.map((store) => (
-        <a key={store.id} href={store.url(primary)} target="_blank" rel="noopener noreferrer" className={pill}>
-          {store.label}
-          <ExternalLink className="size-3" />
-        </a>
-      ))}
-      {secondary && (
-        <a href={googleShoppingUrl(secondary)} target="_blank" rel="noopener noreferrer" className={pill}>
-          <Fan className="size-3" />
-          Cooler
-          <ExternalLink className="size-3" />
-        </a>
-      )}
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="label-mono text-subtle">Lojas:</span>
+        {STORES.map((store) => (
+          <a key={store.id} href={store.url(primary)} target="_blank" rel="noopener noreferrer" className={storeLink}>
+            {store.label}
+            <ArrowUpRight className="size-3" />
+          </a>
+        ))}
+        {secondary && (
+          <a href={googleShoppingUrl(secondary)} target="_blank" rel="noopener noreferrer" className={storeLink}>
+            Cooler
+            <ArrowUpRight className="size-3" />
+          </a>
+        )}
+      </span>
     </div>
   );
 }
 
-export function PartCard({ part }: { part: RecommendedPart }) {
+export function PartCard({ part, index }: { part: RecommendedPart; index: number }) {
   const ui = CATEGORY_UI[part.category];
-  const Icon = ui.icon;
 
   return (
-    <article className="flex flex-col rounded-2xl border border-line bg-surface p-4 shadow-sm transition hover:border-brand/40">
-      <div className="flex items-start gap-3">
-        <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ring-1 ${ui.box}`}>
-          <Icon className={`size-5 ${ui.text}`} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-[11px] font-semibold tracking-wider text-subtle uppercase">{CATEGORY_LABEL[part.category]}</span>
-            <span className="shrink-0 text-sm font-bold">{part.price > 0 ? brl(part.price) : "Incluso"}</span>
-          </div>
-          <h3 className="mt-0.5 text-sm leading-snug font-semibold">{part.name}</h3>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {part.specs.map((spec) => (
-              <span key={spec} className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">
-                {spec}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-3 flex-1 rounded-xl bg-surface-2 p-3 text-xs leading-relaxed text-muted">
-        <span className="mb-1 flex items-center gap-1 font-semibold text-brand-text">
-          <Sparkles className="size-3.5" />
-          Por que a IA escolheu
+    <article className="flex flex-col border border-line bg-surface">
+      <header className="flex items-center justify-between gap-2 border-b border-line px-4 py-2">
+        <span className="label-mono flex items-center gap-2 text-subtle">
+          <span className={`size-2 ${ui.bar}`} />
+          {ui.code} · {String(index + 1).padStart(2, "0")}
+          <span className="hidden text-subtle/70 sm:inline">— {CATEGORY_LABEL[part.category].split(" (")[0]}</span>
         </span>
-        {part.reason}
-      </p>
+        <span className="font-mono text-sm font-semibold">{part.price > 0 ? brl(part.price) : "Incluso"}</span>
+      </header>
 
-      <div className="mt-3">
-        <PriceLinks terms={part.searchTerms} />
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="text-[15px] leading-snug font-semibold">{part.name}</h3>
+        <p className="mt-1 font-mono text-[11px] text-muted">{part.specs.join("  ·  ")}</p>
+
+        <p className="mt-4 border-l-2 border-brand pl-3 text-[13px] leading-relaxed text-muted">
+          <span className="label-mono mb-1 block text-brand-text">Por que a IA escolheu</span>
+          {part.reason}
+        </p>
+
+        <div className="mt-auto pt-4">
+          <PriceLinks terms={part.searchTerms} />
+        </div>
       </div>
     </article>
   );

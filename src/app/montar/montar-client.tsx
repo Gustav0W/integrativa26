@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRightLeft, Eraser, Puzzle, Sparkles, Target, WandSparkles } from "lucide-react";
+import { ArrowRightLeft, Eraser } from "lucide-react";
 import { EvaluationPanel } from "@/components/evaluation-panel";
 import { PriceLinks } from "@/components/part-card";
 import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, inputClass, primaryButton, secondaryButton } from "@/components/ui";
@@ -129,7 +129,7 @@ export function MontarClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageIntro icon={Puzzle} title="Monte você mesmo" description="Escolha as peças que você viu e gostou. A IA confere a compatibilidade e diz, em tempo real, se a configuração serve para o seu uso.">
+      <PageIntro code="03" title="Monte você mesmo" description="Escolha as peças que você viu e gostou. A IA confere a compatibilidade e diz, em tempo real, se a configuração serve para o seu uso.">
         <button type="button" onClick={() => applySelection(EMPTY)} className={secondaryButton} disabled={chosenCount === 0}>
           <Eraser className="size-3.5" />
           Limpar peças
@@ -138,51 +138,49 @@ export function MontarClient() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="min-w-0 space-y-4 lg:col-span-7">
-          <Panel title="Para que vai usar o PC?" icon={Target}>
+          <Panel index="01" title="Para que vai usar o PC?">
             <ObjectivePicker value={objectives} onChange={setObjectives} resolution={resolution} onResolutionChange={setResolution} compact />
           </Panel>
 
-          <Panel title={`Suas peças (${chosenCount}/7)`} icon={Puzzle}>
-            <div className="divide-y divide-line">
-              {SLOTS.map((slot) => {
+          <Panel index="02" title="Suas peças" aside={<span className="label-mono text-subtle">{chosenCount}/7 escolhidas</span>}>
+            <div className="-my-4 divide-y divide-line">
+              {SLOTS.map((slot, index) => {
                 const category = slot === "case" ? "case" : slot;
                 const ui = CATEGORY_UI[category];
-                const Icon = ui.icon;
                 const options = OPTIONS[slot];
                 const chosen = slot === "gpu" && selection.gpu === INTEGRATED ? null : options.find((item) => item.id === selection[slot]);
                 const igpu = build.cpu ? integratedGpu(build.cpu) : null;
                 return (
-                  <div key={slot} className="py-4 first:pt-0 last:pb-0">
-                    <div className="flex items-start gap-3">
-                      <span className={`flex size-9 shrink-0 items-center justify-center rounded-xl ring-1 ${ui.box}`}>
-                        <Icon className={`size-4 ${ui.text}`} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <label htmlFor={`slot-${slot}`} className="text-sm font-semibold">
-                          {CATEGORY_LABEL[category]}
-                        </label>
-                        <p className="text-xs text-subtle">{HINTS[slot]}</p>
-                        <select id={`slot-${slot}`} value={selection[slot]} onChange={(event) => choose(slot, event.target.value)} className={`${inputClass} mt-2 cursor-pointer`}>
-                          <option value="">— Escolher —</option>
-                          {slot === "gpu" && <option value={INTEGRATED}>{igpu ? `Usar vídeo integrado (${igpu.name.replace("Vídeo integrado ", "").replace(" (no processador)", "")})` : "Usar vídeo integrado do processador"}</option>}
-                          {options.map((item) => {
-                            const conflict = conflictFor(slot, item, build);
-                            return (
-                              <option key={item.id} value={item.id}>
-                                {conflict ? "⚠ " : ""}
-                                {item.name} — {brl(item.price)}
-                                {conflict ? ` (${conflict})` : ""}
-                              </option>
-                            );
-                          })}
-                        </select>
-                        {chosen && (
-                          <div className="mt-2 space-y-2">
-                            <p className="text-xs text-muted">{chosen.note}</p>
-                            <PriceLinks terms={"coolerSearch" in chosen && typeof chosen.coolerSearch === "string" ? [chosen.search, chosen.coolerSearch] : [chosen.search]} />
-                          </div>
-                        )}
-                      </div>
+                  <div key={slot} className="grid gap-x-4 py-4 sm:grid-cols-[4.5rem_1fr]">
+                    <span className="label-mono flex items-center gap-2 pt-0.5 text-subtle sm:block">
+                      <span className={`mb-1.5 hidden size-2 sm:block ${selection[slot] ? ui.bar : "bg-line"}`} />
+                      {ui.code} · {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <div className="min-w-0">
+                      <label htmlFor={`slot-${slot}`} className="text-sm font-semibold">
+                        {CATEGORY_LABEL[category]}
+                      </label>
+                      <p className="text-xs text-subtle">{HINTS[slot]}</p>
+                      <select id={`slot-${slot}`} value={selection[slot]} onChange={(event) => choose(slot, event.target.value)} className={`${inputClass} mt-2 cursor-pointer`}>
+                        <option value="">— Escolher —</option>
+                        {slot === "gpu" && <option value={INTEGRATED}>{igpu ? `Usar vídeo integrado (${igpu.name.replace("Vídeo integrado ", "").replace(" (no processador)", "")})` : "Usar vídeo integrado do processador"}</option>}
+                        {options.map((item) => {
+                          const conflict = conflictFor(slot, item, build);
+                          return (
+                            <option key={item.id} value={item.id}>
+                              {conflict ? "⚠ " : ""}
+                              {item.name} — {brl(item.price)}
+                              {conflict ? ` (${conflict})` : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      {chosen && (
+                        <div className="mt-3 space-y-3">
+                          <p className="border-l-2 border-line pl-3 text-xs text-muted">{chosen.note}</p>
+                          <PriceLinks terms={"coolerSearch" in chosen && typeof chosen.coolerSearch === "string" ? [chosen.search, chosen.coolerSearch] : [chosen.search]} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -192,58 +190,55 @@ export function MontarClient() {
         </div>
 
         {/* Avaliação ao vivo */}
-        <aside className="min-w-0 space-y-4 lg:col-span-5 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-2xl border border-brand/30 bg-surface p-4 shadow-sm">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-semibold tracking-wider text-subtle uppercase">Total das peças</p>
-                <p className="text-2xl font-bold">{brl(total)}</p>
+        <aside className="min-w-0 space-y-4 lg:col-span-5 lg:sticky lg:top-20 lg:self-start">
+          <div className="border border-ink/80 bg-surface">
+            <div className="grid grid-cols-[1fr_auto] divide-x divide-line">
+              <div className="p-4">
+                <p className="label-mono text-subtle">Total das peças</p>
+                <p className="mt-1 font-mono text-3xl font-semibold tracking-tight">{brl(total)}</p>
               </div>
-              <div className="w-36">
-                <label htmlFor="montar-budget" className="text-[11px] font-semibold text-subtle uppercase">
-                  Orçamento (opcional)
+              <div className="w-40 p-4">
+                <label htmlFor="montar-budget" className="label-mono text-subtle">
+                  Orçamento
                 </label>
-                <input id="montar-budget" type="number" inputMode="numeric" min={0} step={100} value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="R$" className={`${inputClass} mt-1 py-1.5`} />
+                <input id="montar-budget" type="number" inputMode="numeric" min={0} step={100} value={budget} onChange={(event) => setBudget(event.target.value)} placeholder="opcional" className={`${inputClass} mt-1 py-1.5 font-mono`} />
               </div>
             </div>
             {budgetValue !== null && (
-              <p className={`mt-2 text-xs font-medium ${total <= budgetValue ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+              <p className={`label-mono border-t border-line px-4 py-2 ${total <= budgetValue ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                 {total <= budgetValue ? `Dentro do orçamento — sobram ${brl(budgetValue - total)}` : `${brl(total - budgetValue)} acima do orçamento`}
               </p>
             )}
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <button type="button" onClick={fillWithAi} disabled={chosenCount === 7} className={`${primaryButton} px-3 py-2.5 text-xs`}>
-                <WandSparkles className="size-4" />
+            <div className="grid grid-cols-2 gap-2 border-t border-line p-4">
+              <button type="button" onClick={fillWithAi} disabled={chosenCount === 7} className={`${primaryButton} px-3 py-2.5 text-[11px]`}>
                 Completar com a IA
               </button>
               <button type="button" onClick={compareWithAi} disabled={chosenCount < 7 || !compatible} className={`${secondaryButton} py-2.5`} title={chosenCount < 7 ? "Escolha as 7 peças para comparar" : undefined}>
-                <ArrowRightLeft className="size-4" />
+                <ArrowRightLeft className="size-3.5" />
                 Comparar com a IA
               </button>
             </div>
-            {message && <p className="mt-3 text-xs text-muted">{message}</p>}
+            {message && <p className="border-t border-line px-4 py-2.5 text-xs text-muted">{message}</p>}
           </div>
 
           {comparison && (
-            <div className="rounded-2xl border border-line bg-surface p-4">
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
-                <Sparkles className="size-4 text-brand-text" />
-                Sugestão da IA por {brl(comparison.total)}
-              </h3>
-              <p className="mt-1 text-xs text-muted">
+            <section className="border border-line bg-surface p-4">
+              <p className="label-mono text-brand-text">Sugestão da IA · {brl(comparison.total)}</p>
+              <p className="mt-1.5 text-sm text-muted">
                 {comparison.score > (evaluation.overall ?? 0) + 3
                   ? `Com um valor parecido, a IA chega a ${comparison.score}/100 contra ${evaluation.overall}/100 da sua build.`
                   : `Sua build está no nível da sugestão da IA (${evaluation.overall}/100 vs ${comparison.score}/100). Boa escolha!`}
               </p>
-              <ul className="mt-3 space-y-1 text-xs">
+              <ul className="mt-3 divide-y divide-line border-y border-line text-xs">
                 {SLOTS.map((slot) => {
                   const combo = comparison.combo;
                   const item = { cpu: combo.cpu, gpu: combo.gpu, mobo: combo.mobo, ram: combo.ram, ssd: combo.ssd, psu: combo.psu, case: combo.kit }[slot];
                   const same = fromCombo(combo)[slot] === selection[slot];
                   return (
-                    <li key={slot} className="flex justify-between gap-2">
-                      <span className={`truncate ${same ? "text-subtle" : "font-medium"}`}>{item.name}</span>
-                      <span className="shrink-0 text-subtle">{item.price > 0 ? brl(item.price) : "incluso"}</span>
+                    <li key={slot} className="flex items-baseline gap-3 py-1.5">
+                      <span className="label-mono w-10 shrink-0 text-subtle">{CATEGORY_UI[slot].code}</span>
+                      <span className={`min-w-0 flex-1 truncate ${same ? "text-subtle" : "font-medium"}`}>{item.name}</span>
+                      <span className="shrink-0 font-mono text-subtle">{item.price > 0 ? brl(item.price) : "incluso"}</span>
                     </li>
                   );
                 })}
@@ -251,7 +246,7 @@ export function MontarClient() {
               <button type="button" onClick={() => applySelection(fromCombo(comparison.combo))} className={`${secondaryButton} mt-3 w-full`}>
                 Usar a sugestão da IA
               </button>
-            </div>
+            </section>
           )}
 
           <EvaluationPanel evaluation={evaluation} resolutionLabel={RESOLUTION_LABEL[resolution]} />

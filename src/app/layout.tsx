@@ -1,18 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { InlineScript } from "@/components/inline-script";
 import { SiteHeader } from "@/components/site-header";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/** Títulos: Archivo com eixo de largura (usada expandida). */
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
+  axes: ["wdth"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -32,16 +41,19 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="pt-BR"
       data-theme="light"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <head>
         <InlineScript html={themeScript} />
       </head>
-      <body className="flex min-h-full flex-col bg-canvas text-fg">
+      <body className="flex min-h-full flex-col text-fg">
         <SiteHeader />
         <main className="relative flex-1">{children}</main>
-        <footer className="border-t border-line py-6 text-center text-xs text-subtle">
-          SmartBuild AI · Projeto Integrativa · Recomendações geradas por IA com preços estimados de referência
+        <footer className="border-t border-line bg-canvas">
+          <div className="label-mono mx-auto flex max-w-7xl flex-col gap-1 px-4 py-5 text-subtle sm:flex-row sm:justify-between sm:px-6">
+            <span>SmartBuild/AI — Projeto Integrativa</span>
+            <span>Preços estimados de referência · Rev. 2026</span>
+          </div>
         </footer>
       </body>
     </html>
