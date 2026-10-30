@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTransition } from "@/components/page-transition";
 import { AssistenteClient } from "./assistente-client";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AssistentePage() {
-  return <AssistenteClient />;
+  return (
+    <PageTransition>
+      <AssistenteClient />
+    </PageTransition>
+  );
 }

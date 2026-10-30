@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTransition } from "@/components/page-transition";
 import { MontarClient } from "./montar-client";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function MontarPage() {
-  return <MontarClient />;
+  return (
+    <PageTransition>
+      <MontarClient />
+    </PageTransition>
+  );
 }

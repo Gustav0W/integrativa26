@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageTransition } from "@/components/page-transition";
 import { ConversarClient } from "./conversar-client";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function ConversarPage() {
-  return <ConversarClient />;
+  return (
+    <PageTransition>
+      <ConversarClient />
+    </PageTransition>
+  );
 }

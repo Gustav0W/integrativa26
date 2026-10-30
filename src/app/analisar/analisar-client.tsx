@@ -101,7 +101,7 @@ export function AnalisarClient() {
   const openInAssistant = (result: BuildResult) => {
     writeSessionState("assistente:form", result.input);
     writeSessionState("assistente:result", result);
-    router.push("/assistente");
+    router.push("/assistente", { transitionTypes: ["nav-back"] });
   };
 
   const canAnalyze = mode === "pdf" ? file !== null : pasted.trim().length > 0;

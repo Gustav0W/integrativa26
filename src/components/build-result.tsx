@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { ViewTransition, startTransition, useRef, useState } from "react";
 import { Activity, Bot, CircleCheck, Copy, Download, Gauge, Lightbulb, ListChecks, Package, RotateCcw, ShieldCheck, Target, TriangleAlert, Wallet, X } from "lucide-react";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, objectivesLabel, scoreLabel } from "@/lib/engine";
 import type { BuildResult } from "@/lib/types";
@@ -27,7 +27,9 @@ export function downloadText(filename: string, text: string) {
 
 /** Resultado de uma recomendação: resumo enxuto + detalhes em abas. */
 export function BuildResultView({ result, onRegenerate }: { result: BuildResult; onRegenerate?: () => void }) {
-  const [tab, setTab] = useState<Tab>("parts");
+  const [tab, setTabState] = useState<Tab>("parts");
+  /** Dentro de startTransition para o React animar a troca de aba (crossfade). */
+  const setTab = (next: Tab) => startTransition(() => setTabState(next));
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { input } = result;
@@ -151,102 +153,106 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
         ))}
       </div>
 
-      {tab === "parts" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          {result.parts.map((part) => (
-            <PartCard key={part.category} part={part} />
-          ))}
-        </div>
-      )}
-
-      {tab === "health" && (
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className={`rounded-2xl border p-5 ${allOk ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-500/30 dark:bg-emerald-500/5" : "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/5"}`}>
-            <div className="mb-4 flex items-center justify-between gap-2">
-              <h3 className="flex items-center gap-2 text-sm font-semibold">
-                <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-                Verificador de compatibilidade
-              </h3>
-              <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white dark:bg-emerald-500/20 dark:text-emerald-300">{allOk ? "100% compatível" : "Revisar"}</span>
+      <ViewTransition key={tab} enter="tab-fade" exit="tab-fade" default="none">
+        <div>
+          {tab === "parts" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              {result.parts.map((part) => (
+                <PartCard key={part.category} part={part} />
+              ))}
             </div>
-            <CompatibilityList checks={result.compatibility} />
-          </div>
+          )}
 
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
-              <Gauge className="size-4 text-brand-text" />
-              Estimativa de desempenho
-            </h3>
-            <div className="flex items-center gap-5">
-              <ScoreRing score={result.score} label={scoreLabel(result.score)} size="sm" />
-              <div className="flex-1 space-y-3">
-                {result.performance.map((metric) => (
-                  <div key={metric.label}>
-                    <div className="mb-1 flex justify-between text-xs">
-                      <span className="text-muted">{metric.label}</span>
-                      <span className="font-semibold">{metric.value}/100</span>
-                    </div>
-                    <ProgressBar value={metric.value} />
-                  </div>
-                ))}
+          {tab === "health" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className={`rounded-2xl border p-5 ${allOk ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-500/30 dark:bg-emerald-500/5" : "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/5"}`}>
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold">
+                    <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
+                    Verificador de compatibilidade
+                  </h3>
+                  <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[11px] font-bold text-white dark:bg-emerald-500/20 dark:text-emerald-300">{allOk ? "100% compatível" : "Revisar"}</span>
+                </div>
+                <CompatibilityList checks={result.compatibility} />
               </div>
-            </div>
-            {gaming && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {result.fpsEstimate !== null && (
-                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
-                    <Activity className="size-3.5 text-brand-text" />~{result.fpsEstimate} FPS em AAA · {RESOLUTION_LABEL[input.resolution]}
-                  </span>
+
+              <div className="rounded-2xl border border-line bg-surface p-5">
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+                  <Gauge className="size-4 text-brand-text" />
+                  Estimativa de desempenho
+                </h3>
+                <div className="flex items-center gap-5">
+                  <ScoreRing score={result.score} label={scoreLabel(result.score)} size="sm" />
+                  <div className="flex-1 space-y-3">
+                    {result.performance.map((metric) => (
+                      <div key={metric.label}>
+                        <div className="mb-1 flex justify-between text-xs">
+                          <span className="text-muted">{metric.label}</span>
+                          <span className="font-semibold">{metric.value}/100</span>
+                        </div>
+                        <ProgressBar value={metric.value} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {gaming && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {result.fpsEstimate !== null && (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
+                        <Activity className="size-3.5 text-brand-text" />~{result.fpsEstimate} FPS em AAA · {RESOLUTION_LABEL[input.resolution]}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
+                      <Target className="size-3.5 text-brand-text" />
+                      {bottleneckPct <= 10 ? "Gargalo CPU/GPU baixo" : `Gargalo de CPU ~${bottleneckPct}%`}
+                    </span>
+                  </div>
                 )}
-                <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 px-2.5 py-1 text-xs font-medium">
-                  <Target className="size-3.5 text-brand-text" />
-                  {bottleneckPct <= 10 ? "Gargalo CPU/GPU baixo" : `Gargalo de CPU ~${bottleneckPct}%`}
-                </span>
               </div>
-            )}
-          </div>
 
-          <div className="rounded-2xl border border-line bg-surface p-5 md:col-span-2">
-            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <Wallet className="size-4 text-brand-text" />
-              Para onde vai o dinheiro
-            </h3>
-            <div className="flex h-3 w-full overflow-hidden rounded-full bg-surface-2">
-              {result.parts
-                .filter((part) => part.price > 0)
-                .map((part) => (
-                  <div key={part.category} className={`h-full ${CATEGORY_UI[part.category].bar}`} style={{ width: `${(part.price / result.total) * 100}%` }} title={`${CATEGORY_LABEL[part.category]}: ${brl(part.price)}`} />
-                ))}
+              <div className="rounded-2xl border border-line bg-surface p-5 md:col-span-2">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                  <Wallet className="size-4 text-brand-text" />
+                  Para onde vai o dinheiro
+                </h3>
+                <div className="flex h-3 w-full overflow-hidden rounded-full bg-surface-2">
+                  {result.parts
+                    .filter((part) => part.price > 0)
+                    .map((part) => (
+                      <div key={part.category} className={`h-full ${CATEGORY_UI[part.category].bar}`} style={{ width: `${(part.price / result.total) * 100}%` }} title={`${CATEGORY_LABEL[part.category]}: ${brl(part.price)}`} />
+                    ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
+                  {result.parts
+                    .filter((part) => part.price > 0)
+                    .map((part) => (
+                      <div key={part.category} className="flex items-center gap-1.5 text-[11px] text-muted">
+                        <span className={`size-2 shrink-0 rounded-full ${CATEGORY_UI[part.category].bar}`} />
+                        <span className="truncate">{CATEGORY_LABEL[part.category].split(" (")[0]}</span>
+                        <span className="ml-auto font-semibold text-fg">{Math.round((part.price / result.total) * 100)}%</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 sm:grid-cols-4">
-              {result.parts
-                .filter((part) => part.price > 0)
-                .map((part) => (
-                  <div key={part.category} className="flex items-center gap-1.5 text-[11px] text-muted">
-                    <span className={`size-2 shrink-0 rounded-full ${CATEGORY_UI[part.category].bar}`} />
-                    <span className="truncate">{CATEGORY_LABEL[part.category].split(" (")[0]}</span>
-                    <span className="ml-auto font-semibold text-fg">{Math.round((part.price / result.total) * 100)}%</span>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {tab === "tips" && (
-        <div className="rounded-2xl border border-line bg-surface p-5">
-          <p className="mb-2 text-[11px] font-semibold tracking-wider text-subtle uppercase">Como a IA entendeu o pedido</p>
-          <div className="mb-5 flex flex-wrap gap-1.5">
-            {result.interpretation.map((chip) => (
-              <span key={chip} className="rounded-md bg-surface-2 px-2 py-1 text-[11px] font-medium text-muted">
-                {chip}
-              </span>
-            ))}
-          </div>
-          <InsightList insights={result.insights} />
-          <p className="mt-4 border-t border-line pt-3 text-[11px] text-subtle">Preços estimados de referência do mercado brasileiro. Use os links de busca para conferir o menor preço do dia.</p>
+          {tab === "tips" && (
+            <div className="rounded-2xl border border-line bg-surface p-5">
+              <p className="mb-2 text-[11px] font-semibold tracking-wider text-subtle uppercase">Como a IA entendeu o pedido</p>
+              <div className="mb-5 flex flex-wrap gap-1.5">
+                {result.interpretation.map((chip) => (
+                  <span key={chip} className="rounded-md bg-surface-2 px-2 py-1 text-[11px] font-medium text-muted">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+              <InsightList insights={result.insights} />
+              <p className="mt-4 border-t border-line pt-3 text-[11px] text-subtle">Preços estimados de referência do mercado brasileiro. Use os links de busca para conferir o menor preço do dia.</p>
+            </div>
+          )}
         </div>
-      )}
+      </ViewTransition>
 
       {toast && (
         <div className="fixed right-4 bottom-4 left-4 z-50 flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm shadow-2xl sm:left-auto">

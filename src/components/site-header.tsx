@@ -4,16 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Cpu } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
-import { TOOLS } from "./tools";
+import { TOOLS, navTransition } from "./tools";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const links = [{ href: "/", short: "Início" }, ...TOOLS];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-xl">
+    <header className="site-header sticky top-0 z-30 border-b border-line bg-canvas/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link href="/" className="flex min-w-0 items-center gap-2.5">
+        <Link href="/" transitionTypes={navTransition(pathname, "/")} className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-brand-from to-brand-to shadow-md shadow-brand/25">
             <Cpu className="size-5 text-on-brand" />
           </span>
@@ -29,6 +29,7 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                transitionTypes={navTransition(pathname, link.href)}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${active ? "bg-brand-soft text-brand-text" : "text-muted hover:bg-surface-2 hover:text-fg"}`}
               >
                 {link.short}
@@ -57,6 +58,7 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
+              transitionTypes={navTransition(pathname, link.href)}
               className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition ${active ? "bg-brand-soft text-brand-text" : "text-muted hover:text-fg"}`}
             >
               {link.short}

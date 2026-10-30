@@ -1,6 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import { FileSearch, MessagesSquare, Puzzle, WandSparkles } from "lucide-react";
 
+/** Ordem do menu: define se a transição de página desliza para frente ou para trás. */
+const NAV_ORDER = ["/", "/assistente", "/conversar", "/montar", "/analisar"];
+
+export function navTransition(from: string, to: string): string[] {
+  const a = NAV_ORDER.indexOf(from);
+  const b = NAV_ORDER.indexOf(to);
+  if (a === -1 || b === -1 || a === b) return [];
+  return [b > a ? "nav-forward" : "nav-back"];
+}
+
 /** As quatro ferramentas da plataforma (usadas no menu e na página inicial). */
 export const TOOLS: { href: string; short: string; title: string; description: string; idealFor: string; icon: LucideIcon }[] = [
   {

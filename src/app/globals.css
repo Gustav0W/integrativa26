@@ -69,3 +69,101 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+/* ============================================================================
+ * Transições entre páginas (View Transitions API + <ViewTransition> do React)
+ * ==========================================================================*/
+
+/* O cabeçalho fica parado enquanto o conteúdo desliza. */
+.site-header {
+  view-transition-name: site-header;
+}
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header) {
+  display: none;
+}
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+/* Cliques durante a animação vão para a página, não para a camada da transição. */
+::view-transition {
+  pointer-events: none;
+}
+
+/* Avançar no menu: sai para a esquerda, entra pela direita. Voltar: o inverso. */
+::view-transition-old(.nav-forward) {
+  --slide-offset: -48px;
+  animation:
+    150ms ease-in both vt-fade reverse,
+    380ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide reverse;
+}
+::view-transition-new(.nav-forward) {
+  --slide-offset: 48px;
+  animation:
+    220ms ease-out 120ms both vt-fade,
+    380ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide;
+}
+::view-transition-old(.nav-back) {
+  --slide-offset: 48px;
+  animation:
+    150ms ease-in both vt-fade reverse,
+    380ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide reverse;
+}
+::view-transition-new(.nav-back) {
+  --slide-offset: -48px;
+  animation:
+    220ms ease-out 120ms both vt-fade,
+    380ms cubic-bezier(0.4, 0, 0.2, 1) both vt-slide;
+}
+
+/* Navegação sem direção (botão voltar do navegador) e troca de abas: só fade. */
+::view-transition-old(.page-fade),
+::view-transition-old(.tab-fade) {
+  animation: 140ms ease-in both vt-fade reverse;
+}
+::view-transition-new(.page-fade),
+::view-transition-new(.tab-fade) {
+  animation: 220ms ease-out 100ms both vt-fade;
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+@keyframes vt-slide {
+  from {
+    translate: var(--slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+/* Troca de tema: o novo tema é revelado por um círculo (animado em theme-toggle.tsx). */
+html[data-theme-transition]::view-transition-old(root),
+html[data-theme-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+html[data-theme-transition] .site-header {
+  view-transition-name: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
