@@ -1,5 +1,6 @@
 import { computeLocalBuild, sanitizeInput } from "@/lib/engine";
 import { explainBuild, geminiAvailable, interpretSignals } from "@/lib/server/gemini";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 /** Tempo máximo da função na hospedagem (Vercel etc.): o Gemini leva alguns segundos. */
 export const maxDuration = 60;
@@ -12,6 +13,8 @@ export const maxDuration = 60;
  * Se o Gemini falhar, devolve o resultado do motor local (source: "local").
  */
 export async function POST(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
   const input = sanitizeInput(await request.json().catch(() => null));
 
   const signals = geminiAvailable() && input.prompt ? await interpretSignals(input.prompt).catch(() => undefined) : undefined;

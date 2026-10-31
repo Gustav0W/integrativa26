@@ -15,6 +15,7 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
   Os campos `gaming`, `multi`, `render` e `score` (0–100) são estimativas relativas, não benchmarks. Eles definem a escolha das peças e o FPS estimado. Calibrar com fontes como a tabela de desempenho relativo do TechPowerUp ou a hierarquia de GPUs do Tom's Hardware.
 
 - [ ] **3. Proteger a cota do Gemini antes de publicar** — `src/app/api/*`
+  *Parcial:* já existe limite de 20 requisições / 10 min por IP, em memória (`src/lib/server/rate-limit.ts`). Falta trocar por Upstash Ratelimit para um limite global na Vercel e criar uma chave só para o projeto publicado.
   Hoje qualquer pessoa pode chamar as rotas `/api/*` sem limite e gastar a cota gratuita. Adicionar limite de requisições por IP (ex.: Upstash Ratelimit, que tem plano gratuito) e uma mensagem amigável quando estourar. Usar uma chave criada só para o projeto publicado.
 
 - [ ] **4. Imagens no site**
@@ -25,7 +26,7 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 
 ## Média prioridade
 
-- [ ] **6. Testes automatizados**
+- [x] **6. Testes automatizados** *(feito: Vitest, `npm test`)*
   Não há testes; o motor e a leitura de texto foram testados só manualmente. Criar testes (ex.: Vitest) para `src/lib/engine.ts` (toda build sugerida é compatível, respeita o orçamento, funciona com vários usos) e `src/lib/nlp.ts` (“5 mil” = 5000, “4K” não é dinheiro, etc.).
 
 - [ ] **7. Chat com resposta em streaming** — `src/app/api/conversar`, `src/lib/server/gemini.ts`
@@ -43,7 +44,7 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 - [ ] **11. Opinião do Gemini na página Montar**
   Hoje essa página usa só o motor local (avaliação instantânea). Adicionar um botão “Pedir opinião da IA” sob demanda, para não esperar a cada clique.
 
-- [ ] **12. Aviso de privacidade**
+- [x] **12. Aviso de privacidade** *(feito: `PrivacyNote` nas páginas Conversar e Analisar PDF)*
   No plano gratuito da API do Gemini, o Google pode usar o conteúdo enviado para melhorar os produtos dele. Avisar isso nas páginas de chat e de PDF (ou usar um plano pago, em que isso não acontece).
 
 - [ ] **13. Acessibilidade**
@@ -56,7 +57,7 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 - [ ] **16. Mais peças e categorias** — dois SSDs na mesma build, placas ITX, mais gabinetes/coolers, monitores avulsos, notebooks.
 - [ ] **17. Preços automáticos** — buscar preços de alguma API ou serviço de comparação (verificar os termos de uso das lojas).
 - [ ] **18. Rodar o motor em um Web Worker** — a busca testa ~300 mil combinações (~80 ms num PC); em celulares fracos pode travar a tela por um instante.
-- [ ] **19. Dependência sem uso** — `@ai-sdk/openai` está instalado e não é usado: remover ou usar como reserva quando o Gemini estiver fora.
+- [x] **19. Dependência sem uso** *(feito: `@ai-sdk/openai` removido)* — `@ai-sdk/openai` está instalado e não é usado: remover ou usar como reserva quando o Gemini estiver fora.
 - [ ] **20. Manter a lista de modelos do Gemini em dia** — o Google aposenta modelos (o Gemini 2.5 já não responde). Se o chat começar a cair sempre no modo offline, atualizar `MODELS` em `src/lib/server/gemini.ts`.
 
 ## Problemas conhecidos
@@ -64,7 +65,6 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 - Preços e FPS são estimativas (itens 1 e 2).
 - No modo offline (sem Gemini) o texto é lido por palavras-chave: frases como “não quero jogar” são mal interpretadas. Com o Gemini ativo isso não acontece.
 - Conversa e resultados somem ao recarregar a página (item 8).
-- O `npm run lint` não foi rodado depois das últimas mudanças: rodar e corrigir os avisos.
 
 ---
 

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { ChevronDown, ChevronUp, RotateCcw, SendHorizontal } from "lucide-react";
 import { BuildResultView } from "@/components/build-result";
 import { PriceLinks } from "@/components/part-card";
-import { CATEGORY_UI, PageIntro, primaryButton, secondaryButton } from "@/components/ui";
+import { CATEGORY_UI, PageIntro, PrivacyNote, primaryButton, secondaryButton } from "@/components/ui";
 import { requestChat, sleep } from "@/lib/api";
 import { brl, clampBudget, computeLocalBuild, objectivesLabel, scoreLabel } from "@/lib/engine";
 import { parseRequest } from "@/lib/nlp";
@@ -162,6 +162,7 @@ export function ConversarClient() {
           </button>
         )}
       </PageIntro>
+      <PrivacyNote />
 
       <div className="space-y-6">
         {messages.length === 0 && (
