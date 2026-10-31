@@ -6,7 +6,6 @@ import { CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, Gradua
 import { BUDGET_MAX, BUDGET_MIN } from "@/lib/catalog";
 import { brl, clampBudget } from "@/lib/engine";
 import type { InsightTone, Objective, PartCategory, Resolution } from "@/lib/types";
-import { inputClass } from "./styles";
 
 /* ----------------------------------------------------------------------------
  * Categorias de peça: código curto (estilo ficha técnica) + cor da barra de custo
@@ -53,6 +52,15 @@ export function PageIntro({ code, title, description, children }: { code: string
       </div>
       {children}
     </div>
+  );
+}
+
+/** Aviso sobre o uso do conteúdo enviado ao Gemini (plano gratuito). */
+export function PrivacyNote() {
+  return (
+    <p className="mb-6 border border-line bg-surface px-4 py-2.5 text-xs text-muted" role="note">
+      <strong className="font-semibold text-ink">Privacidade:</strong> o que você escreve ou envia aqui é processado pela API gratuita do Google Gemini, e o Google pode usar esse conteúdo para melhorar os produtos dele. Não envie dados pessoais, CPF ou informações sensíveis.
+    </p>
   );
 }
 

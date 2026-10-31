@@ -2,6 +2,7 @@ import { extractText, getDocumentProxy } from "unpdf";
 import { analyzeDocumentText } from "@/lib/analysis";
 import { sanitizeInput } from "@/lib/engine";
 import { geminiAvailable, modelLabel, readSpecDocument, writeVerdict } from "@/lib/server/gemini";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 /** Tempo máximo da função na hospedagem (Vercel etc.): o Gemini leva alguns segundos. */
 export const maxDuration = 60;
@@ -20,6 +21,8 @@ export const maxDuration = 60;
 const MAX_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
   const form = await request.formData().catch(() => null);
   if (!form) return Response.json({ error: "Envie os dados como formulário." }, { status: 400 });
 
