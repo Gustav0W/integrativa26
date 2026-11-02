@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Upload, X } from "lucide-react";
 import { EvaluationPanel } from "@/components/evaluation-panel";
 import { LoadingState } from "@/components/build-result";
-import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, Segmented, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, PrivacyNote, Segmented, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import type { DocumentAnalysis } from "@/lib/analysis";
 import { requestDocumentAnalysis, sleep } from "@/lib/api";
 import { RESOLUTION_LABEL, brl } from "@/lib/engine";
@@ -90,6 +90,7 @@ export function AnalisarClient() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
       <PageIntro code="04" title="Analisar orçamento em PDF" description="Envie o orçamento de uma loja, a ficha técnica de um PC pronto ou de um usado. A IA identifica as peças e diz se valem a pena para o seu uso." />
+      <PrivacyNote />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="min-w-0 space-y-4 lg:col-span-5">

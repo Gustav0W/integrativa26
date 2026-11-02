@@ -86,6 +86,7 @@ export function MontarClient() {
   const [resolution, setResolution] = useSessionState<Resolution>("montar:resolution", "1440p");
   const [budget, setBudget] = useSessionState<string>("montar:budget", "");
   const [message, setMessage] = useState<string | null>(null);
+  const [filters, setFilters] = useState<Partial<Record<Slot, string>>>({});
   const [comparison, setComparison] = useState<{ combo: Combo; score: number; total: number } | null>(null);
 
   const build = useMemo(() => toBuild(selection), [selection]);
@@ -128,7 +129,7 @@ export function MontarClient() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:pb-8">
       <PageIntro code="03" title="Monte você mesmo" description="Escolha as peças que você viu e gostou. A IA confere a compatibilidade e diz, em tempo real, se a configuração serve para o seu uso.">
         <button type="button" onClick={() => applySelection(EMPTY)} className={secondaryButton} disabled={chosenCount === 0}>
           <Eraser className="size-3.5" />
@@ -150,6 +151,11 @@ export function MontarClient() {
                 const options = OPTIONS[slot];
                 const chosen = slot === "gpu" && selection.gpu === INTEGRATED ? null : options.find((item) => item.id === selection[slot]);
                 const igpu = build.cpu ? integratedGpu(build.cpu) : null;
+                const query = (filters[slot] ?? "").trim().toLowerCase();
+                const visible = options
+                  .filter((item) => item.id === selection[slot] || !query || `${item.name} ${item.search}`.toLowerCase().includes(query))
+                  .map((item) => ({ item, conflict: conflictFor(slot, item, build) }))
+                  .sort((a, b) => Number(a.conflict !== null) - Number(b.conflict !== null));
                 return (
                   <div key={slot} className="grid gap-x-4 py-4 sm:grid-cols-[4.5rem_1fr]">
                     <span className="label-mono flex items-center gap-2 pt-0.5 text-subtle sm:block">
@@ -161,11 +167,18 @@ export function MontarClient() {
                         {CATEGORY_LABEL[category]}
                       </label>
                       <p className="text-xs text-subtle">{HINTS[slot]}</p>
+                      <input
+                        type="search"
+                        value={filters[slot] ?? ""}
+                        onChange={(event) => setFilters((prev) => ({ ...prev, [slot]: event.target.value }))}
+                        placeholder="Buscar pelo nome…"
+                        aria-label={`Buscar ${CATEGORY_LABEL[category]}`}
+                        className={`${inputClass} mt-2 py-1.5 text-xs`}
+                      />
                       <select id={`slot-${slot}`} value={selection[slot]} onChange={(event) => choose(slot, event.target.value)} className={`${inputClass} mt-2 cursor-pointer`}>
                         <option value="">— Escolher —</option>
                         {slot === "gpu" && <option value={INTEGRATED}>{igpu ? `Usar vídeo integrado (${igpu.name.replace("Vídeo integrado ", "").replace(" (no processador)", "")})` : "Usar vídeo integrado do processador"}</option>}
-                        {options.map((item) => {
-                          const conflict = conflictFor(slot, item, build);
+                        {visible.map(({ item, conflict }) => {
                           return (
                             <option key={item.id} value={item.id}>
                               {conflict ? "⚠ " : ""}
@@ -249,8 +262,22 @@ export function MontarClient() {
             </section>
           )}
 
-          <EvaluationPanel evaluation={evaluation} resolutionLabel={RESOLUTION_LABEL[resolution]} />
+          <div id="avaliacao" className="scroll-mt-20">
+            <EvaluationPanel evaluation={evaluation} resolutionLabel={RESOLUTION_LABEL[resolution]} />
+          </div>
         </aside>
+      </div>
+
+      {/* Barra fixa no celular: total, nota e atalho para a avaliação */}
+      <div className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-ink/80 bg-surface px-4 py-3 lg:hidden">
+        <div className="min-w-0">
+          <p className="label-mono text-subtle">Total das peças</p>
+          <p className="font-mono text-lg font-semibold leading-tight">{brl(total)}</p>
+        </div>
+        <p className="label-mono text-subtle">{evaluation.overall !== null ? `Nota ${evaluation.overall}/100` : `${chosenCount}/7 peças`}</p>
+        <a href="#avaliacao" className={`${primaryButton} px-3 py-2 text-[11px]`}>
+          Ver avaliação
+        </a>
       </div>
     </div>
   );

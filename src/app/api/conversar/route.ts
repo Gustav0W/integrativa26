@@ -1,5 +1,6 @@
 import { computeLocalBuild, sanitizeInput } from "@/lib/engine";
 import { converse, explainBuild, geminiAvailable, modelLabel } from "@/lib/server/gemini";
+import { rateLimit } from "@/lib/server/rate-limit";
 
 /** Tempo máximo da função na hospedagem (Vercel etc.): o Gemini leva alguns segundos. */
 export const maxDuration = 60;
@@ -13,6 +14,8 @@ export const maxDuration = 60;
  */
 export async function POST(request: Request) {
   if (!geminiAvailable()) return Response.json({ error: "Gemini não configurado." }, { status: 503 });
+  const limited = rateLimit(request);
+  if (limited) return limited;
 
   const body = (await request.json().catch(() => null)) as { message?: unknown; previous?: unknown; history?: unknown; currentBuild?: unknown } | null;
   const message = typeof body?.message === "string" ? body.message.trim().slice(0, 1000) : "";
