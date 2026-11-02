@@ -1,4 +1,4 @@
-import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, PERIPHERAL_KITS, PSUS, RAMS, SSDS, googleShoppingUrl } from "./catalog";
+import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS, googleShoppingUrl } from "./catalog";
 import type {
   BuildInput,
   BuildResult,
@@ -12,9 +12,10 @@ import type {
   MetricTable,
   MoboOption,
   Objective,
+  Sector,
   PartCategory,
   PartialBuild,
-  PeripheralKit,
+  MonitorOption,
   PromptSignals,
   PsuOption,
   RamOption,
@@ -23,6 +24,7 @@ import type {
   Socket,
   SsdOption,
 } from "./types";
+
 import { parsePrompt } from "./nlp";
 
 /* ============================================================================
@@ -54,8 +56,8 @@ interface ComboAnalysis {
 
 const METRIC_KEYS: MetricKey[] = ["game", "render", "cpuMulti", "cpuSingle", "ram", "ssd", "mobo", "psu", "cooling"];
 
-/** Ordem de "exigência": o primeiro objetivo selecionado nesta lista guia os textos. */
-const OBJECTIVE_PRIORITY: Objective[] = ["arquitetura", "gaming", "dev", "office"];
+/** Ordem de "exigência": o primeiro setor selecionado nesta lista guia os textos. */
+const SECTOR_PRIORITY: Sector[] = ["engenharia", "design", "desenvolvimento", "gaming", "contabilidade", "escritorio"];
 
 /** Quanto a resolução "esconde" uma CPU mais fraca (GPU-bound em resoluções altas). */
 const CPU_RES_FACTOR: Record<Resolution, number> = { "1080p": 1, "1440p": 1.25, "4k": 1.6 };
@@ -63,11 +65,13 @@ export const REQUIRED_VRAM: Record<Resolution, number> = { "1080p": 8, "1440p": 
 const FPS_RES_FACTOR: Record<Resolution, number> = { "1080p": 1, "1440p": 0.72, "4k": 0.42 };
 export const RESOLUTION_LABEL: Record<Resolution, string> = { "1080p": "1080p", "1440p": "1440p", "4k": "4K" };
 
-export const OBJECTIVE_LABEL: Record<Objective, string> = {
+export const SECTOR_LABEL: Record<Sector, string> = {
   gaming: "Gaming",
-  arquitetura: "Arquitetura & Render 3D",
-  dev: "Desenvolvimento",
-  office: "Home Office / Estudos",
+  engenharia: "Engenharia & BIM",
+  design: "Design & Artes",
+  desenvolvimento: "Desenvolvimento de Software",
+  contabilidade: "Contabilidade",
+  escritorio: "Escritório / Administrativo",
 };
 
 export const CATEGORY_LABEL: Record<PartCategory, string> = {
@@ -78,30 +82,69 @@ export const CATEGORY_LABEL: Record<PartCategory, string> = {
   ssd: "Armazenamento (SSD NVMe)",
   psu: "Fonte (PSU)",
   case: "Gabinete & Cooler",
-  extra: "Monitor & Periféricos",
+  extra: "Monitor",
 };
 
-const BASE_WEIGHTS: Record<Objective, MetricTable> = {
+export const OBJECTIVE_LABEL: Record<Objective, string> = {
+  gaming: "Gaming",
+  arquitetura: "Arquitetura & Render 3D",
+  dev: "Desenvolvimento",
+  office: "Escritório / Estudos",
+};
+
+const BASE_WEIGHTS: Record<Sector, MetricTable> = {
   gaming: { game: 0.58, render: 0, cpuMulti: 0.04, cpuSingle: 0.05, ram: 0.1, ssd: 0.08, mobo: 0.05, psu: 0.04, cooling: 0.06 },
-  arquitetura: { game: 0, render: 0.3, cpuMulti: 0.18, cpuSingle: 0.12, ram: 0.18, ssd: 0.08, mobo: 0.04, psu: 0.04, cooling: 0.06 },
-  dev: { game: 0.04, render: 0, cpuMulti: 0.32, cpuSingle: 0.12, ram: 0.24, ssd: 0.14, mobo: 0.05, psu: 0.03, cooling: 0.06 },
-  office: { game: 0.04, render: 0, cpuMulti: 0.22, cpuSingle: 0.2, ram: 0.2, ssd: 0.2, mobo: 0.05, psu: 0.04, cooling: 0.05 },
+  engenharia: { game: 0, render: 0.3, cpuMulti: 0.18, cpuSingle: 0.12, ram: 0.18, ssd: 0.08, mobo: 0.04, psu: 0.04, cooling: 0.06 },
+  design: { game: 0.04, render: 0, cpuMulti: 0.32, cpuSingle: 0.12, ram: 0.24, ssd: 0.14, mobo: 0.05, psu: 0.03, cooling: 0.06 },
+  desenvolvimento: { game: 0.02, render: 0, cpuMulti: 0.27, cpuSingle: 0.2, ram: 0.19, ssd: 0.16, mobo: 0.05, psu: 0.04, cooling: 0.07 },
+  contabilidade: { game: 0.04, render: 0, cpuMulti: 0.22, cpuSingle: 0.2, ram: 0.2, ssd: 0.2, mobo: 0.05, psu: 0.04, cooling: 0.05 },
+  escritorio: { game: 0.04, render: 0, cpuMulti: 0.22, cpuSingle: 0.2, ram: 0.2, ssd: 0.2, mobo: 0.05, psu: 0.04, cooling: 0.05 },
+};
+
+const SOFTWARE_WEIGHTS: Record<string, Partial<MetricTable>> = {
+  Alterdata: { cpuSingle: 0.02, ram: 0.02 },
+  "Domínio": { cpuSingle: 0.02, ram: 0.02 },
+  Fortes: { cpuSingle: 0.02, ram: 0.02 },
+  SCI: { cpuSingle: 0.02, ram: 0.02 },
+  Photoshop: { render: 0.08, ram: 0.04 },
+  Illustrator: { cpuSingle: 0.04, ram: 0.02 },
+  InDesign: { cpuSingle: 0.03, ram: 0.02 },
+  CorelDRAW: { cpuSingle: 0.04, ram: 0.02 },
+  AutoCAD: { cpuSingle: 0.06, ram: 0.02 },
+  Revit: { cpuMulti: 0.06, render: 0.06, ram: 0.06 },
+  SolidWorks: { cpuMulti: 0.04, render: 0.08, ram: 0.04 },
+  SketchUp: { cpuSingle: 0.04, render: 0.04, ram: 0.02 },
+  "VS Code": { cpuSingle: 0.03, ram: 0.03, ssd: 0.02 },
+  "Visual Studio": { cpuMulti: 0.06, ram: 0.05, ssd: 0.03 },
+  Docker: { cpuMulti: 0.04, ram: 0.08, ssd: 0.04 },
+  "Android Studio": { cpuMulti: 0.04, cpuSingle: 0.03, ram: 0.08, ssd: 0.03 },
+  "Excel Avançado": { cpuSingle: 0.04, ram: 0.04 },
+  "Browser (Muitas abas)": { ram: 0.08 },
+  "Teams/Zoom": { cpuMulti: 0.03, ram: 0.03 },
+  ERP: { cpuSingle: 0.03, ram: 0.03 },
+  "Jogos AAA": { game: 0.08, ssd: 0.04 },
+  "e-Sports": { game: 0.04, cpuSingle: 0.05 },
+  Streaming: { cpuMulti: 0.08, ram: 0.03 },
+  Emuladores: { cpuSingle: 0.04, cpuMulti: 0.04, ram: 0.04 },
 };
 
 /** Teto útil de cada métrica por objetivo: acima disso a IA não gasta mais. */
-const BASE_CAPS: Record<Objective, MetricTable> = {
+const BASE_CAPS: Record<Sector, MetricTable> = {
   gaming: { game: 92, render: 100, cpuMulti: 70, cpuSingle: 100, ram: 75, ssd: 76, mobo: 65, psu: 65, cooling: 72 },
-  arquitetura: { game: 100, render: 100, cpuMulti: 100, cpuSingle: 90, ram: 95, ssd: 86, mobo: 80, psu: 80, cooling: 88 },
-  dev: { game: 45, render: 100, cpuMulti: 90, cpuSingle: 85, ram: 95, ssd: 86, mobo: 70, psu: 65, cooling: 72 },
-  office: { game: 10, render: 100, cpuMulti: 45, cpuSingle: 55, ram: 45, ssd: 55, mobo: 40, psu: 30, cooling: 40 },
+  engenharia: { game: 100, render: 100, cpuMulti: 100, cpuSingle: 90, ram: 95, ssd: 86, mobo: 80, psu: 80, cooling: 88 },
+  design: { game: 45, render: 100, cpuMulti: 90, cpuSingle: 85, ram: 95, ssd: 86, mobo: 70, psu: 65, cooling: 72 },
+  desenvolvimento: { game: 20, render: 45, cpuMulti: 90, cpuSingle: 85, ram: 90, ssd: 85, mobo: 70, psu: 65, cooling: 72 },
+  contabilidade: { game: 10, render: 100, cpuMulti: 45, cpuSingle: 55, ram: 45, ssd: 55, mobo: 40, psu: 30, cooling: 40 },
+  escritorio: { game: 10, render: 100, cpuMulti: 45, cpuSingle: 55, ram: 45, ssd: 55, mobo: 40, psu: 30, cooling: 40 },
 };
 
 const GAME_CAP_BY_RESOLUTION: Record<Resolution, number> = { "1080p": 80, "1440p": 92, "4k": 100 };
-const LAMBDA: Record<Objective, number> = { gaming: 0.12, arquitetura: 0.1, dev: 0.3, office: 1.2 };
+const LAMBDA: Record<Sector, number> = { gaming: 0.12, engenharia: 0.1, design: 0.3, desenvolvimento: 0.35, contabilidade: 1.2, escritorio: 1.2 };
 /** Armazenamento mínimo confortável por uso (GB). */
-const STORAGE_NEED: Record<Objective, number> = { gaming: 1000, arquitetura: 1000, dev: 1000, office: 500 };
+const STORAGE_NEED: Record<Sector, number> = { gaming: 1000, engenharia: 1000, design: 1000, desenvolvimento: 1000, contabilidade: 500, escritorio: 500 };
 /** Usos que consomem muito disco: dois ou mais juntos pedem 2TB. */
-const HEAVY_STORAGE: Objective[] = ["gaming", "arquitetura", "dev"];
+const HEAVY_STORAGE: Sector[] = ["gaming", "engenharia", "design"];
+
 
 const brlFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 export const brl = (value: number) => brlFormatter.format(value);
@@ -112,37 +155,54 @@ export function clampBudget(value: number) {
 }
 
 export function normalizeInput(input: BuildInput): BuildInput {
-  const objectives = OBJECTIVE_PRIORITY.filter((o) => input.objectives.includes(o));
+  const legacyObjectives = (input as BuildInput & { objectives?: unknown }).objectives;
+  const legacySector = Array.isArray(legacyObjectives)
+    ? legacyObjectives.includes("gaming") ? "gaming" : legacyObjectives.includes("arquitetura") ? "engenharia" : legacyObjectives.includes("dev") ? "desenvolvimento" : "escritorio"
+    : "escritorio";
+  const sector = SECTOR_PRIORITY.includes(input.sector) ? input.sector : legacySector;
+  const softwares = Array.isArray(input.softwares) ? input.softwares.filter((software): software is string => typeof software === "string") : [];
+  const prompt = typeof input.prompt === "string" ? input.prompt : "";
   return {
     ...input,
-    objectives: objectives.length > 0 ? objectives : ["office"],
+    sector,
+    softwares: softwares.filter((software) => SECTORS[sector].softwares.includes(software)),
+    monitorId: MONITORS.some((monitor) => monitor.id === input.monitorId) ? input.monitorId : null,
+    resolution: input.resolution === "1080p" || input.resolution === "4k" ? input.resolution : "1440p",
+    brand: input.brand === "amd" || input.brand === "intel" ? input.brand : "any",
+    silent: input.silent === true,
     budget: clampBudget(input.budget),
-    prompt: input.prompt.trim().slice(0, 500),
+    prompt: prompt.trim().slice(0, 500),
   };
 }
 
 /** Valida um BuildInput vindo de fora (corpo de requisição, resposta do LLM). */
 export function sanitizeInput(raw: unknown): BuildInput {
   const data = (raw ?? {}) as Partial<Record<keyof BuildInput, unknown>>;
-  const objectives = Array.isArray(data.objectives) ? data.objectives.filter((o): o is Objective => OBJECTIVE_PRIORITY.includes(o as Objective)) : [];
   return normalizeInput({
     budget: typeof data.budget === "number" ? data.budget : Number(data.budget),
-    objectives,
+    sector: SECTOR_PRIORITY.includes(data.sector as Sector) ? (data.sector as Sector) : "escritorio",
+    softwares: Array.isArray(data.softwares) ? data.softwares.map(String) : [],
     resolution: data.resolution === "1080p" || data.resolution === "4k" ? data.resolution : "1440p",
     brand: data.brand === "amd" || data.brand === "intel" ? data.brand : "any",
-    includePeripherals: data.includePeripherals === true,
+    monitorId: typeof data.monitorId === "string" ? data.monitorId : null,
     silent: data.silent === true,
     prompt: typeof data.prompt === "string" ? data.prompt : "",
   });
 }
 
+
 export function sameInput(a: BuildInput, b: BuildInput) {
   return JSON.stringify(normalizeInput(a)) === JSON.stringify(normalizeInput(b));
 }
 
-export function objectivesLabel(objectives: Objective[], resolution?: Resolution) {
-  return objectives.map((o) => (o === "gaming" && resolution ? `Gaming ${RESOLUTION_LABEL[resolution]}` : OBJECTIVE_LABEL[o])).join(" + ");
+export function sectorLabel(sector: Sector, resolution?: Resolution) {
+  return sector === "gaming" && resolution ? `Gaming ${RESOLUTION_LABEL[resolution]}` : SECTOR_LABEL[sector];
 }
+
+export function objectivesLabel(objectives: Objective[], resolution?: Resolution) {
+  return objectives.map((objective) => objective === "gaming" && resolution ? `Gaming ${RESOLUTION_LABEL[resolution]}` : OBJECTIVE_LABEL[objective]).join(" + ");
+}
+
 
 export function capacityLabel(gb: number) {
   return gb >= 1000 ? `${gb / 1000}TB` : `${gb}GB`;
@@ -193,27 +253,27 @@ export function estimateFps(game: number, resolution: Resolution) {
   return Math.max(5, Math.round(((game * 1.5 + 5) * FPS_RES_FACTOR[resolution]) / 5) * 5);
 }
 
-function storageNeedFor(objectives: Objective[]) {
-  const heavy = objectives.filter((o) => HEAVY_STORAGE.includes(o)).length;
-  return heavy >= 2 ? 2000 : Math.max(...objectives.map((o) => STORAGE_NEED[o]));
+function storageNeedFor(sector: Sector) {
+  return STORAGE_NEED[sector];
 }
 
 /**
- * Combina os perfis dos objetivos escolhidos:
- * pesos = média (cada uso conta igual), tetos = o maior (o uso mais exigente
- * manda), custo = o menor (se um dos usos pede potência, vale gastar).
+ * Combina os perfis dos setores e softwares escolhidos.
  */
 function buildProfile(input: BuildInput, signals: PromptSignals): Profile {
-  const objectives = input.objectives;
-  const weights = {} as MetricTable;
-  const caps = {} as MetricTable;
-  for (const key of METRIC_KEYS) {
-    weights[key] = objectives.reduce((sum, o) => sum + BASE_WEIGHTS[o][key], 0) / objectives.length;
-    caps[key] = Math.max(...objectives.map((o) => BASE_CAPS[o][key]));
-  }
-  const gaming = objectives.includes("gaming");
+  const sector = input.sector;
+  const weights = { ...BASE_WEIGHTS[sector] };
+  const caps = { ...BASE_CAPS[sector] };
+
+  const gaming = sector === "gaming";
   const silent = input.silent || signals.silent;
-  const storageNeed = storageNeedFor(objectives);
+  const storageNeed = storageNeedFor(sector);
+
+  for (const software of input.softwares) {
+    const additions = SOFTWARE_WEIGHTS[software];
+    if (!additions) continue;
+    for (const [metric, weight] of Object.entries(additions) as [MetricKey, number][]) weights[metric] += weight;
+  }
 
   if (gaming) caps.game = GAME_CAP_BY_RESOLUTION[input.resolution];
   if (storageNeed >= 2000) {
@@ -226,13 +286,13 @@ function buildProfile(input: BuildInput, signals: PromptSignals): Profile {
   }
   if (signals.games.some((g) => g.kind === "competitive")) weights.cpuSingle += 0.06;
   if (signals.streaming) weights.cpuMulti += 0.08;
-  if (signals.render) weights.render += objectives.includes("arquitetura") ? 0.08 : 0.06;
+  if (signals.render) weights.render += sector === "engenharia" ? 0.08 : 0.06;
   if (signals.editing) {
     weights.cpuMulti += 0.05;
     weights.render += 0.04;
   }
   if (signals.ai) {
-    // IA local depende de GPU com CUDA e VRAM: peso alto, mesmo em perfis de escritório/dev.
+    // IA local depende de GPU com CUDA e VRAM: peso alto.
     weights.render += 0.3;
     weights.ram += 0.03;
   }
@@ -250,7 +310,7 @@ function buildProfile(input: BuildInput, signals: PromptSignals): Profile {
   return {
     weights,
     caps,
-    lambda: Math.min(...objectives.map((o) => LAMBDA[o])),
+    lambda: LAMBDA[sector],
     silent,
     wantsWifi: signals.wifi,
     resolution: gaming ? input.resolution : "1440p",
@@ -258,6 +318,7 @@ function buildProfile(input: BuildInput, signals: PromptSignals): Profile {
     signals,
   };
 }
+
 
 function analyzeCombo(combo: Combo, profile: Profile): ComboAnalysis {
   const { cpu, gpu, kit, ssd } = combo;
@@ -354,16 +415,12 @@ function searchCombos(input: BuildInput, profile: Profile, limit: number, mode: 
   return best;
 }
 
-function pickPeripheralKit(input: BuildInput, signals: PromptSignals): PeripheralKit {
-  const primary = input.objectives[0];
-  const chains: Record<Objective, string[]> = {
-    gaming: input.resolution === "4k" ? ["g4k", "g1440", "g1080", "basic"] : input.resolution === "1440p" ? ["g1440", "g1080", "basic"] : ["g1080", "basic"],
-    arquitetura: ["creator", "dual", "basic"],
-    dev: ["dual", "basic"],
-    office: signals.dualMonitor ? ["dual", "basic"] : ["basic"],
-  };
-  const options = chains[primary].map((id) => PERIPHERAL_KITS[id]);
-  return options.find((kit) => kit.price <= input.budget * 0.3) ?? options[options.length - 1];
+function objectiveForSector(sector: Sector): Objective {
+  if (sector === "gaming") return "gaming";
+  if (sector === "engenharia" || sector === "design") return "arquitetura";
+  if (sector === "desenvolvimento") return "dev";
+  if (sector === "escritorio") return "office";
+  return "dev";
 }
 
 function tierFor(pcTotal: number) {
@@ -373,9 +430,9 @@ function tierFor(pcTotal: number) {
   return "Entusiasta";
 }
 
-function describeParts(combo: Combo, input: BuildInput, profile: Profile, analysis: ComboAnalysis, peripherals: PeripheralKit | null): RecommendedPart[] {
+function describeParts(combo: Combo, input: BuildInput, profile: Profile, analysis: ComboAnalysis, monitor: MonitorOption | null): RecommendedPart[] {
   const { cpu, gpu, mobo, ram, ssd, psu, kit } = combo;
-  const objectives = input.objectives;
+  const objectives = [objectiveForSector(input.sector)];
   const has = (o: Objective) => objectives.includes(o);
   const res = RESOLUTION_LABEL[profile.resolution];
   const bottleneckPct = Math.round(analysis.bottleneck * 100);
@@ -422,10 +479,10 @@ function describeParts(combo: Combo, input: BuildInput, profile: Profile, analys
   }
 
   // SSD: considera a soma dos usos (ex.: arquitetura + jogos enche 500GB rápido).
-  const heavyUses = objectives.filter((o) => HEAVY_STORAGE.includes(o));
+  const heavyUse = HEAVY_STORAGE.includes(input.sector);
   const ssdReason =
-    heavyUses.length >= 2
-      ? `Como o PC vai ser usado para ${heavyUses.map((o) => OBJECTIVE_LABEL[o]).join(" e ")}, a IA priorizou espaço: jogos AAA ocupam 100–150GB cada e projetos/bibliotecas crescem rápido — ${capacityLabel(ssd.capacity)} evitam ficar apagando arquivos.`
+    heavyUse
+      ? `Como o PC vai ser usado para ${SECTOR_LABEL[input.sector]}, a IA priorizou espaço: jogos AAA ocupam 100–150GB cada e projetos/bibliotecas crescem rápido — ${capacityLabel(ssd.capacity)} evitam ficar apagando arquivos.`
       : has("gaming")
         ? `Com ${capacityLabel(ssd.capacity)}, cabem vários jogos atuais (100–150GB cada).`
         : has("arquitetura")
@@ -493,14 +550,14 @@ function describeParts(combo: Combo, input: BuildInput, profile: Profile, analys
     },
   ];
 
-  if (peripherals) {
+  if (monitor) {
     parts.push({
       category: "extra",
-      name: peripherals.name,
-      price: peripherals.price,
-      reason: `${peripherals.note} Valor reservado do orçamento total antes de montar o PC.`,
-      specs: ["Monitor", "Teclado", "Mouse"],
-      searchTerms: [peripherals.search],
+      name: monitor.name,
+      price: monitor.price,
+      reason: `${monitor.note} Selecionado para o setor ${SECTOR_LABEL[input.sector]}.`,
+      specs: [`${monitor.size}\"`, monitor.resolution, monitor.panel, `${monitor.refreshRate}Hz`],
+      searchTerms: [monitor.search],
     });
   }
   return parts;
@@ -516,7 +573,8 @@ const PLATFORM_NOTE: Record<Socket, string> = {
 
 function buildInsights(combo: Combo, input: BuildInput, profile: Profile, analysis: ComboAnalysis, total: number, overBudget: boolean): Insight[] {
   const { cpu, gpu, ram, ssd } = combo;
-  const has = (o: Objective) => input.objectives.includes(o);
+  const objectives = [objectiveForSector(input.sector)];
+  const has = (o: Objective) => objectives.includes(o);
   const insights: Insight[] = [];
   const res = RESOLUTION_LABEL[profile.resolution];
   const integrated = gpu.brand === "integrated";
@@ -525,7 +583,7 @@ function buildInsights(combo: Combo, input: BuildInput, profile: Profile, analys
   if (overBudget) {
     insights.push({
       tone: "warning",
-      text: `Nenhuma combinação compatível cabe em ${brl(input.budget)}. Exibimos a build mínima viável (${brl(total)}) — aumente o orçamento${input.includePeripherals ? " ou desative os periféricos" : ""}.`,
+      text: `Nenhuma combinação compatível cabe em ${brl(input.budget)}. Exibimos a build mínima viável (${brl(total)}) — aumente o orçamento${input.monitorId ? " ou retire o monitor" : ""}.`,
     });
   }
 
@@ -539,9 +597,7 @@ function buildInsights(combo: Combo, input: BuildInput, profile: Profile, analys
     }
   }
 
-  if (input.objectives.length > 1) {
-    insights.push({ tone: "info", text: `Build pensada para ${input.objectives.map((o) => OBJECTIVE_LABEL[o]).join(" + ")}: a IA equilibrou as prioridades de cada uso em vez de otimizar só um deles.` });
-  }
+  if (input.softwares.length > 0) insights.push({ tone: "info", text: `Prioridades ajustadas para ${input.softwares.join(", ")}.` });
   if (profile.storageNeed >= 2000 && ssd.capacity >= 2000) {
     insights.push({ tone: "success", text: `Armazenamento de ${capacityLabel(ssd.capacity)}: com mais de um uso pesado, 500GB–1TB lotam rápido. Se precisar de mais, um segundo SSD pode ser instalado depois.` });
   } else if (ssd.capacity < profile.storageNeed) {
@@ -563,7 +619,7 @@ function buildInsights(combo: Combo, input: BuildInput, profile: Profile, analys
   if (!overBudget && leftover >= Math.max(800, input.budget * 0.15)) {
     insights.push({
       tone: "success",
-      text: `A IA economizou ${brl(leftover)}: acima disso o ganho para ${input.objectives.map((o) => OBJECTIVE_LABEL[o]).join(" + ")} seria pequeno. Considere usar a sobra em um bom monitor, periféricos ou um nobreak.`,
+      text: `A IA economizou ${brl(leftover)}: acima disso o ganho para ${SECTOR_LABEL[input.sector]} seria pequeno. Considere usar a sobra em um bom monitor ou nobreak.`,
     });
   }
 
@@ -616,25 +672,26 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
   const input = normalizeInput(rawInput);
   const signals = signalsOverride ?? parsePrompt(input.prompt);
   const profile = buildProfile(input, signals);
-  const peripherals = input.includePeripherals ? pickPeripheralKit(input, signals) : null;
-  const pcBudget = input.budget - (peripherals?.price ?? 0);
+  const monitor = MONITORS.find((item) => item.id === input.monitorId) ?? null;
+  const pcBudget = input.budget - (monitor?.price ?? 0);
 
   const combo = searchCombos(input, profile, pcBudget, "best", locked) ?? searchCombos(input, profile, Number.POSITIVE_INFINITY, "cheapest", locked);
   if (!combo) throw new Error("As peças fixadas são incompatíveis entre si: nenhuma combinação encontrada.");
 
   const analysis = analyzeCombo(combo, profile);
   const pcTotal = comboPrice(combo);
-  const total = pcTotal + (peripherals?.price ?? 0);
+  const total = pcTotal + (monitor?.price ?? 0);
   const overBudget = total > input.budget;
   const { cpu, gpu, mobo, ram } = combo;
   const integrated = gpu.brand === "integrated";
 
   const interpretation = [
-    ...input.objectives.map((o) => (o === "gaming" ? `Gaming ${RESOLUTION_LABEL[input.resolution]}` : OBJECTIVE_LABEL[o])),
+    sectorLabel(input.sector, input.sector === "gaming" ? input.resolution : undefined),
+    ...input.softwares,
     `Teto de ${brl(input.budget)}`,
     input.brand === "any" ? "Marca indiferente" : `Preferência ${input.brand === "amd" ? "AMD" : "Intel"}`,
     ...(profile.silent ? ["Foco em silêncio"] : []),
-    ...(peripherals ? ["Com monitor e periféricos"] : []),
+    ...(monitor ? [`Monitor ${monitor.name}`] : []),
     ...(profile.storageNeed >= 2000 ? ["Armazenamento extra (2TB+)"] : []),
     ...signals.games.map((game) => `${game.name} (${game.kind === "heavy" ? "AAA pesado" : "competitivo"})`),
     ...(signals.ultra ? ["Gráficos no Ultra"] : []),
@@ -648,10 +705,10 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
   ];
 
   return {
-    parts: describeParts(combo, input, profile, analysis, peripherals),
+    parts: describeParts(combo, input, profile, analysis, monitor),
     total,
     budget: input.budget,
-    tier: tierFor(pcTotal),
+    tier: tierFor(total),
     platform: `${cpu.socket} · ${mobo.memory}`,
     score: Math.round(analysis.normalized),
     performance: [
@@ -659,7 +716,7 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
       { label: "Render & Criação", value: Math.round(Math.min(100, analysis.metrics.render * 0.6 + cpu.multi * 0.4)) },
       { label: "Multitarefa & Código", value: Math.round(cpu.multi * 0.55 + ram.score * 0.45) },
     ],
-    fpsEstimate: input.objectives.includes("gaming") && !integrated ? estimateFps(analysis.metrics.game, input.resolution) : null,
+    fpsEstimate: input.sector === "gaming" && !integrated ? estimateFps(analysis.metrics.game, input.resolution) : null,
     bottleneck: analysis.bottleneck,
     compatibility: compatibilityFor(combo),
     insights: buildInsights(combo, input, profile, analysis, total, overBudget),
@@ -677,7 +734,8 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
 export function completeBuild(locked: PartialBuild, rawInput: BuildInput): Combo | null {
   const input = normalizeInput(rawInput);
   const profile = buildProfile(input, parsePrompt(input.prompt));
-  return searchCombos(input, profile, input.budget, "best", locked) ?? searchCombos(input, profile, Number.POSITIVE_INFINITY, "cheapest", locked);
+  const pcBudget = input.budget - (MONITORS.find((item) => item.id === input.monitorId)?.price ?? 0);
+  return searchCombos(input, profile, pcBudget, "best", locked) ?? searchCombos(input, profile, Number.POSITIVE_INFINITY, "cheapest", locked);
 }
 
 /* ============================================================================
@@ -718,7 +776,7 @@ export function resolveGpu(build: PartialBuild): GpuOption | null {
 
 export function buildPartsPrice(build: PartialBuild) {
   const gpu = build.gpu && build.gpu !== "integrated" ? build.gpu.price : 0;
-  return (build.cpu?.price ?? 0) + (build.mobo?.price ?? 0) + (build.ram?.price ?? 0) + gpu + (build.ssd?.price ?? 0) + (build.psu?.price ?? 0) + (build.kit?.price ?? 0);
+  return (build.cpu?.price ?? 0) + (build.mobo?.price ?? 0) + (build.ram?.price ?? 0) + gpu + (build.ssd?.price ?? 0) + (build.psu?.price ?? 0) + (build.kit?.price ?? 0) + (build.monitor?.price ?? 0);
 }
 
 function partialChecks(build: PartialBuild): CompatibilityCheck[] {
@@ -754,11 +812,24 @@ function partialChecks(build: PartialBuild): CompatibilityCheck[] {
 }
 
 function singleProfile(objectives: Objective[], resolution: Resolution, prompt = ""): Profile {
-  return buildProfile({ budget: BUDGET_MAX, objectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt }, parsePrompt(prompt));
+  const selected: Objective[] = objectives.length > 0 ? objectives : ["office"];
+  const profiles = selected.map((objective) => buildProfile({
+    budget: BUDGET_MAX,
+    sector: objective === "gaming" ? "gaming" : objective === "arquitetura" ? "engenharia" : objective === "office" ? "escritorio" : "contabilidade",
+    softwares: [],
+    resolution,
+    brand: "any",
+    monitorId: null,
+    silent: false,
+    prompt,
+  }, parsePrompt(prompt)));
+  const weights = Object.fromEntries(METRIC_KEYS.map((key) => [key, profiles.reduce((sum, profile) => sum + profile.weights[key], 0) / profiles.length])) as MetricTable;
+  const caps = Object.fromEntries(METRIC_KEYS.map((key) => [key, profiles.reduce((sum, profile) => sum + profile.caps[key], 0) / profiles.length])) as MetricTable;
+  return { ...profiles[0], weights, caps, lambda: profiles.reduce((sum, profile) => sum + profile.lambda, 0) / profiles.length, storageNeed: Math.max(...profiles.map((profile) => profile.storageNeed)) };
 }
 
 export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[], resolution: Resolution, prompt = ""): BuildEvaluation {
-  const objectives = normalizeInput({ budget: BUDGET_MIN, objectives: rawObjectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt }).objectives;
+  const objectives: Objective[] = rawObjectives.length > 0 ? rawObjectives : ["office"];
   const has = (o: Objective) => objectives.includes(o);
   const gpu = resolveGpu(build);
   const checks = partialChecks(build);
@@ -902,9 +973,10 @@ export function buildSummaryText(result: BuildResult) {
     "SMARTBUILD AI — RESUMO DO ORÇAMENTO",
     `Gerado em: ${new Date().toLocaleString("pt-BR")}`,
     line,
-    `Uso: ${objectivesLabel(input.objectives, input.objectives.includes("gaming") ? input.resolution : undefined)}`,
+    `Uso: ${sectorLabel(input.sector, input.sector === "gaming" ? input.resolution : undefined)}`,
+    ...(input.softwares.length ? [`Softwares: ${input.softwares.join(", ")}`] : []),
     `Orçamento máximo: ${brl(input.budget)}`,
-    `Preferências: marca ${input.brand === "any" ? "indiferente" : input.brand.toUpperCase()} · periféricos ${input.includePeripherals ? "sim" : "não"} · silêncio ${input.silent ? "sim" : "não"}`,
+    `Preferências: marca ${input.brand === "any" ? "indiferente" : input.brand.toUpperCase()} · monitor ${input.monitorId ? "sim" : "não"} · silêncio ${input.silent ? "sim" : "não"}`,
     ...(input.prompt ? [`Pedido: "${input.prompt}"`] : []),
     "",
     "PEÇAS RECOMENDADAS",

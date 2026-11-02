@@ -25,7 +25,7 @@ export function analyzeDocumentText(text: string, source: string, objectives: Ob
   const specs = parseSpecs(specText || text);
   const evaluation = evaluateBuild(specs.build, objectives, resolution, text);
   const alternative = specs.totalPrice
-    ? computeLocalBuild({ budget: Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, specs.totalPrice)), objectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt: "" })
+    ? computeLocalBuild({ budget: Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, specs.totalPrice)), sector: objectives.includes("gaming") ? "gaming" : objectives.includes("arquitetura") ? "engenharia" : objectives.includes("dev") ? "escritorio" : "contabilidade", softwares: [], resolution, brand: "any", monitorId: null, silent: false, prompt: "" })
     : null;
   return { source, text, specs, evaluation, objectives, resolution, alternative };
 }

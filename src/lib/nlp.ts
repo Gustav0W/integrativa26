@@ -62,7 +62,7 @@ export interface ParsedRequest {
   resolution: Resolution | null;
   brand: BrandPreference | null;
   silent: boolean;
-  peripherals: boolean | null;
+  monitor: boolean | null;
   /** Ajuste relativo em mensagens de continuação ("mais barato", "mais potente"). */
   adjust: "cheaper" | "stronger" | null;
   /** O usuário quer trocar os usos ("só", "apenas") em vez de somar. */
@@ -104,9 +104,9 @@ export function parseRequest(raw: string): ParsedRequest {
   const intel = /intel|core i\d|core ultra/.test(text);
   const brand: BrandPreference | null = amd && !intel ? "amd" : intel && !amd ? "intel" : null;
 
-  let peripherals: boolean | null = null;
-  if (/sem monitor|ja tenho monitor|so o gabinete|so a cpu/.test(text)) peripherals = false;
-  else if (/com monitor|incluir monitor|inclui monitor|periferic|teclado e mouse|monitor incluso|preciso de monitor/.test(text)) peripherals = true;
+  let monitor: boolean | null = null;
+  if (/sem monitor|ja tenho monitor/.test(text)) monitor = false;
+  else if (/com monitor|incluir monitor|inclui monitor|monitor incluso|preciso de monitor/.test(text)) monitor = true;
 
   let adjust: ParsedRequest["adjust"] = null;
   if (/mais barat|economi|reduz|diminu|menos dinheiro|ta caro|muito caro/.test(text)) adjust = "cheaper";
@@ -118,7 +118,7 @@ export function parseRequest(raw: string): ParsedRequest {
     resolution,
     brand,
     silent: /silenc|barulho|ruido|quiet/.test(text),
-    peripherals,
+    monitor,
     adjust,
     exclusive: /\b(so|apenas|somente)\b/.test(text),
   };

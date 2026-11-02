@@ -4,20 +4,20 @@ import { useMemo, useState } from "react";
 import { ArrowRightLeft, Eraser } from "lucide-react";
 import { EvaluationPanel } from "@/components/evaluation-panel";
 import { PriceLinks } from "@/components/part-card";
-import { CATEGORY_UI, ObjectivePicker, PageIntro, Panel, inputClass, primaryButton, secondaryButton } from "@/components/ui";
-import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, PSUS, RAMS, SSDS } from "@/lib/catalog";
+import { CATEGORY_UI, PageIntro, Panel, SectorPicker, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SSDS } from "@/lib/catalog";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildPartsPrice, completeBuild, evaluateBuild, integratedGpu, requiredPsuWatts, resolveGpu } from "@/lib/engine";
 import { useSessionState } from "@/lib/session-state";
-import type { CatalogItem, Combo, Objective, PartialBuild, Resolution } from "@/lib/types";
+import type { CatalogItem, Combo, Objective, PartialBuild, Resolution, Sector } from "@/lib/types";
 
-type Slot = "cpu" | "gpu" | "mobo" | "ram" | "ssd" | "psu" | "case";
+type Slot = "cpu" | "gpu" | "mobo" | "ram" | "ssd" | "psu" | "case" | "monitor";
 type Selection = Record<Slot, string>;
 
-const EMPTY: Selection = { cpu: "", gpu: "", mobo: "", ram: "", ssd: "", psu: "", case: "" };
-const SLOTS: Slot[] = ["cpu", "gpu", "mobo", "ram", "ssd", "psu", "case"];
+const EMPTY: Selection = { cpu: "", gpu: "", mobo: "", ram: "", ssd: "", psu: "", case: "", monitor: "" };
+const SLOTS: Slot[] = ["cpu", "gpu", "mobo", "ram", "ssd", "psu", "case", "monitor"];
 const INTEGRATED = "integrated";
 
-const OPTIONS: Record<Slot, CatalogItem[]> = { cpu: CPUS, gpu: GPUS, mobo: MOBOS, ram: RAMS, ssd: SSDS, psu: PSUS, case: CASE_KITS };
+const OPTIONS: Record<Slot, CatalogItem[]> = { cpu: CPUS, gpu: GPUS, mobo: MOBOS, ram: RAMS, ssd: SSDS, psu: PSUS, case: CASE_KITS, monitor: MONITORS };
 
 const HINTS: Record<Slot, string> = {
   cpu: "O cérebro do PC. Define a plataforma (socket) das outras peças.",
@@ -27,6 +27,7 @@ const HINTS: Record<Slot, string> = {
   ssd: "Onde ficam sistema, programas e arquivos. Pense no espaço que seus projetos e jogos ocupam.",
   psu: "Alimenta tudo. Fonte fraca ou ruim é a causa mais comum de problemas.",
   case: "Gabinete e cooler precisam dar conta do calor do processador.",
+  monitor: "Selecione um monitor para incluí-lo no custo total da configuração.",
 };
 
 function toBuild(selection: Selection): PartialBuild {
@@ -38,10 +39,11 @@ function toBuild(selection: Selection): PartialBuild {
     ssd: SSDS.find((item) => item.id === selection.ssd),
     psu: PSUS.find((item) => item.id === selection.psu),
     kit: CASE_KITS.find((item) => item.id === selection.case),
+    monitor: MONITORS.find((item) => item.id === selection.monitor),
   };
 }
 
-function fromCombo(combo: Combo): Selection {
+function fromCombo(combo: Combo, monitor = ""): Selection {
   return {
     cpu: combo.cpu.id,
     gpu: combo.gpu.brand === "integrated" ? INTEGRATED : combo.gpu.id,
@@ -50,6 +52,7 @@ function fromCombo(combo: Combo): Selection {
     ssd: combo.ssd.id,
     psu: combo.psu.id,
     case: combo.kit.id,
+    monitor,
   };
 }
 
@@ -82,7 +85,8 @@ function conflictFor(slot: Slot, item: CatalogItem, build: PartialBuild): string
 
 export function MontarClient() {
   const [selection, setSelection] = useSessionState<Selection>("montar:selection", EMPTY);
-  const [objectives, setObjectives] = useSessionState<Objective[]>("montar:objectives", ["gaming"]);
+  const [sector, setSector] = useSessionState<Sector>("montar:sector", "gaming");
+  const [softwares, setSoftwares] = useSessionState<string[]>("montar:softwares", ["Jogos AAA"]);
   const [resolution, setResolution] = useSessionState<Resolution>("montar:resolution", "1440p");
   const [budget, setBudget] = useSessionState<string>("montar:budget", "");
   const [message, setMessage] = useState<string | null>(null);
@@ -90,7 +94,8 @@ export function MontarClient() {
   const [comparison, setComparison] = useState<{ combo: Combo; score: number; total: number } | null>(null);
 
   const build = useMemo(() => toBuild(selection), [selection]);
-  const evaluation = useMemo(() => evaluateBuild(build, objectives, resolution), [build, objectives, resolution]);
+  const objective: Objective = sector === "gaming" ? "gaming" : sector === "engenharia" || sector === "design" ? "arquitetura" : sector === "escritorio" ? "office" : "dev";
+  const evaluation = useMemo(() => evaluateBuild(build, [objective], resolution, softwares.join(" ")), [build, objective, resolution, softwares]);
   const chosenCount = SLOTS.filter((slot) => selection[slot]).length;
   const total = buildPartsPrice(build);
   const budgetValue = Number(budget) > 0 ? Number(budget) : null;
@@ -109,22 +114,22 @@ export function MontarClient() {
   };
 
   const fillWithAi = () => {
-    const combo = completeBuild(build, { budget: budgetValue ?? BUDGET_MAX, objectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt: "" });
+    const combo = completeBuild(build, { budget: budgetValue ?? BUDGET_MAX, sector, softwares, resolution, brand: "any", monitorId: selection.monitor || null, silent: false, prompt: "" });
     if (!combo) {
       setMessage("As peças escolhidas não combinam entre si — corrija as incompatibilidades e tente de novo.");
       return;
     }
     const filled = SLOTS.filter((slot) => !selection[slot]).length;
-    applySelection(fromCombo(combo));
+    applySelection(fromCombo(combo, selection.monitor));
     setMessage(filled > 0 ? `A IA escolheu ${filled} peça(s) que faltavam, mantendo as suas.` : "Sua build já estava completa.");
   };
 
   const compareWithAi = () => {
     const reference = Math.max(BUDGET_MIN, Math.min(BUDGET_MAX, total));
-    const combo = completeBuild({}, { budget: reference, objectives, resolution, brand: "any", includePeripherals: false, silent: false, prompt: "" });
+    const combo = completeBuild({}, { budget: reference, sector, softwares, resolution, brand: "any", monitorId: selection.monitor || null, silent: false, prompt: "" });
     if (!combo) return;
-    const aiBuild = toBuild(fromCombo(combo));
-    const aiEvaluation = evaluateBuild(aiBuild, objectives, resolution);
+    const aiBuild = toBuild(fromCombo(combo, selection.monitor));
+    const aiEvaluation = evaluateBuild(aiBuild, [objective], resolution, softwares.join(" "));
     setComparison({ combo, score: aiEvaluation.overall ?? 0, total: buildPartsPrice(aiBuild) });
   };
 
@@ -139,14 +144,14 @@ export function MontarClient() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="min-w-0 space-y-4 lg:col-span-7">
-          <Panel index="01" title="Para que vai usar o PC?">
-            <ObjectivePicker value={objectives} onChange={setObjectives} resolution={resolution} onResolutionChange={setResolution} compact />
+          <Panel index="01" title="Setor e softwares">
+            <SectorPicker sector={sector} onSectorChange={setSector} softwares={softwares} onSoftwaresChange={setSoftwares} resolution={resolution} onResolutionChange={setResolution} />
           </Panel>
 
-          <Panel index="02" title="Suas peças" aside={<span className="label-mono text-subtle">{chosenCount}/7 escolhidas</span>}>
+          <Panel index="02" title="Suas peças" aside={<span className="label-mono text-subtle">{chosenCount}/8 escolhidas</span>}>
             <div className="-my-4 divide-y divide-line">
               {SLOTS.map((slot, index) => {
-                const category = slot === "case" ? "case" : slot;
+                const category = slot === "case" ? "case" : slot === "monitor" ? "extra" : slot;
                 const ui = CATEGORY_UI[category];
                 const options = OPTIONS[slot];
                 const chosen = slot === "gpu" && selection.gpu === INTEGRATED ? null : options.find((item) => item.id === selection[slot]);
@@ -223,10 +228,10 @@ export function MontarClient() {
               </p>
             )}
             <div className="grid grid-cols-2 gap-2 border-t border-line p-4">
-              <button type="button" onClick={fillWithAi} disabled={chosenCount === 7} className={`${primaryButton} px-3 py-2.5 text-[11px]`}>
+              <button type="button" onClick={fillWithAi} disabled={chosenCount === 8} className={`${primaryButton} px-3 py-2.5 text-[11px]`}>
                 Completar com a IA
               </button>
-              <button type="button" onClick={compareWithAi} disabled={chosenCount < 7 || !compatible} className={`${secondaryButton} py-2.5`} title={chosenCount < 7 ? "Escolha as 7 peças para comparar" : undefined}>
+              <button type="button" onClick={compareWithAi} disabled={chosenCount < 7 || !compatible} className={`${secondaryButton} py-2.5`} title={chosenCount < 7 ? "Escolha as peças principais para comparar" : undefined}>
                 <ArrowRightLeft className="size-3.5" />
                 Comparar com a IA
               </button>
@@ -245,18 +250,19 @@ export function MontarClient() {
               <ul className="mt-3 divide-y divide-line border-y border-line text-xs">
                 {SLOTS.map((slot) => {
                   const combo = comparison.combo;
-                  const item = { cpu: combo.cpu, gpu: combo.gpu, mobo: combo.mobo, ram: combo.ram, ssd: combo.ssd, psu: combo.psu, case: combo.kit }[slot];
-                  const same = fromCombo(combo)[slot] === selection[slot];
+                  const category = slot === "case" ? "case" : slot === "monitor" ? "extra" : slot;
+                  const item = { cpu: combo.cpu, gpu: combo.gpu, mobo: combo.mobo, ram: combo.ram, ssd: combo.ssd, psu: combo.psu, case: combo.kit, monitor: selection.monitor ? MONITORS.find((monitor) => monitor.id === selection.monitor) ?? null : null }[slot];
+                  const same = fromCombo(combo, selection.monitor)[slot] === selection[slot];
                   return (
                     <li key={slot} className="flex items-baseline gap-3 py-1.5">
-                      <span className="label-mono w-10 shrink-0 text-subtle">{CATEGORY_UI[slot].code}</span>
-                      <span className={`min-w-0 flex-1 truncate ${same ? "text-subtle" : "font-medium"}`}>{item.name}</span>
-                      <span className="shrink-0 font-mono text-subtle">{item.price > 0 ? brl(item.price) : "incluso"}</span>
+                      <span className="label-mono w-10 shrink-0 text-subtle">{CATEGORY_UI[category].code}</span>
+                      <span className={`min-w-0 flex-1 truncate ${same ? "text-subtle" : "font-medium"}`}>{item?.name ?? "Não incluído"}</span>
+                      <span className="shrink-0 font-mono text-subtle">{item && item.price > 0 ? brl(item.price) : "incluso"}</span>
                     </li>
                   );
                 })}
               </ul>
-              <button type="button" onClick={() => applySelection(fromCombo(comparison.combo))} className={`${secondaryButton} mt-3 w-full`}>
+              <button type="button" onClick={() => applySelection(fromCombo(comparison.combo, selection.monitor))} className={`${secondaryButton} mt-3 w-full`}>
                 Usar a sugestão da IA
               </button>
             </section>
@@ -274,7 +280,7 @@ export function MontarClient() {
           <p className="label-mono text-subtle">Total das peças</p>
           <p className="font-mono text-lg font-semibold leading-tight">{brl(total)}</p>
         </div>
-        <p className="label-mono text-subtle">{evaluation.overall !== null ? `Nota ${evaluation.overall}/100` : `${chosenCount}/7 peças`}</p>
+        <p className="label-mono text-subtle">{evaluation.overall !== null ? `Nota ${evaluation.overall}/100` : `${chosenCount}/8 peças`}</p>
         <a href="#avaliacao" className={`${primaryButton} px-3 py-2 text-[11px]`}>
           Ver avaliação
         </a>

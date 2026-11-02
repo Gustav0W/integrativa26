@@ -6,9 +6,10 @@ import { BuildResultView } from "@/components/build-result";
 import { PriceLinks } from "@/components/part-card";
 import { CATEGORY_UI, PageIntro, PrivacyNote, primaryButton, secondaryButton } from "@/components/ui";
 import { requestChat, sleep } from "@/lib/api";
-import { brl, clampBudget, computeLocalBuild, objectivesLabel, scoreLabel } from "@/lib/engine";
-import { parseRequest } from "@/lib/nlp";
-import type { BuildInput, BuildResult, Objective } from "@/lib/types";
+import { SECTORS } from "@/lib/catalog";
+import { brl, clampBudget, computeLocalBuild, scoreLabel, sectorLabel } from "@/lib/engine";
+import { normalizeText, parseRequest } from "@/lib/nlp";
+import type { BuildInput, BuildResult, Objective, Sector } from "@/lib/types";
 import { useSessionState } from "@/lib/session-state";
 
 type BuildMessage = { id: number; role: "ai"; kind: "build"; text: string; notes: string[]; result: BuildResult };
@@ -27,7 +28,23 @@ const STARTERS = [
   "Qual a diferença entre SSD NVMe e SATA? Vale a pena pagar mais?",
 ];
 
-const FOLLOW_UPS = ["Pode ser mais barato?", "Quero algo mais potente", "Quero jogar em 4K", "Também vou programar", "Incluir monitor e periféricos"];
+const FOLLOW_UPS = ["Pode ser mais barato?", "Quero algo mais potente", "Quero jogar em 4K", "Também vou programar", "Incluir monitor"];
+
+function sectorFromObjectives(objectives: Objective[]): Sector {
+  if (objectives.includes("arquitetura")) return "engenharia";
+  if (objectives.includes("gaming")) return "gaming";
+  if (objectives.includes("dev")) return "desenvolvimento";
+  return "escritorio";
+}
+
+function softwareSelections(text: string, sector: Sector) {
+  const normalized = normalizeText(text);
+  return SECTORS[sector].softwares.filter((software) => normalized.includes(normalizeText(software)));
+}
+
+function monitorForRequest(resolution: BuildInput["resolution"]) {
+  return resolution === "4k" ? "mon-4k" : resolution === "1440p" ? "mon-qhd" : "mon-100hz";
+}
 
 /** Converte a mensagem em parâmetros, considerando o que já foi conversado. */
 function resolveInput(text: string, previous: BuildInput | null): { input: BuildInput; notes: string[] } {
@@ -35,17 +52,19 @@ function resolveInput(text: string, previous: BuildInput | null): { input: Build
   const notes: string[] = [];
 
   if (!previous) {
-    const objectives: Objective[] = parsed.objectives.length > 0 ? parsed.objectives : ["office"];
+    const sector = parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : "escritorio";
     if (parsed.budget === null) notes.push(`Você não citou um valor, então considerei ${brl(DEFAULT_BUDGET)}. Diga, por exemplo, "até 5 mil" para ajustar.`);
-    if (parsed.objectives.length === 0) notes.push("Não identifiquei o uso, então considerei estudos/escritório. Conte se você joga, programa ou trabalha com 3D.");
+    if (parsed.objectives.length === 0) notes.push("Não identifiquei o setor, então considerei escritório/administrativo. Diga quais softwares usa para ajustar a recomendação.");
     const budget = parsed.budget ?? DEFAULT_BUDGET;
+    const resolution = parsed.resolution ?? (budget >= 7000 ? "1440p" : "1080p");
     return {
       input: {
         budget,
-        objectives,
-        resolution: parsed.resolution ?? (budget >= 7000 ? "1440p" : "1080p"),
+        sector,
+        softwares: softwareSelections(text, sector),
+        resolution,
         brand: parsed.brand ?? "any",
-        includePeripherals: parsed.peripherals ?? false,
+        monitorId: parsed.monitor ? monitorForRequest(resolution) : null,
         silent: parsed.silent,
         prompt: text,
       },
@@ -63,19 +82,19 @@ function resolveInput(text: string, previous: BuildInput | null): { input: Build
     notes.push(`Aumentei o orçamento em 25%, para ${brl(clampBudget(budget))}, para buscar mais desempenho.`);
   }
 
-  let objectives = previous.objectives;
-  if (parsed.objectives.length > 0) {
-    objectives = parsed.exclusive ? parsed.objectives : [...new Set([...previous.objectives, ...parsed.objectives])];
-  }
-  if (parsed.resolution && !objectives.includes("gaming")) objectives = [...objectives, "gaming"];
+  const sector = parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : previous.sector;
+  const selectedSoftwares = softwareSelections(text, sector);
+  const softwares = sector === previous.sector ? [...new Set([...previous.softwares, ...selectedSoftwares])] : selectedSoftwares;
+  const resolution = parsed.resolution ?? previous.resolution;
 
   return {
     input: {
       budget,
-      objectives,
-      resolution: parsed.resolution ?? previous.resolution,
+      sector,
+      softwares,
+      resolution,
       brand: parsed.brand ?? previous.brand,
-      includePeripherals: parsed.peripherals ?? previous.includePeripherals,
+      monitorId: parsed.monitor === null ? previous.monitorId : parsed.monitor ? monitorForRequest(resolution) : null,
       silent: previous.silent || parsed.silent,
       prompt: `${previous.prompt} ${text}`.slice(-500),
     },
@@ -109,8 +128,8 @@ export function ConversarClient() {
     const history = messages.map((m) => ({ role: m.role, text: m.text }));
     const currentBuild = lastBuild ? [...lastBuild.result.parts.map((part) => `${part.category.toUpperCase()}: ${part.name} (${brl(part.price)})`), `Total: ${brl(lastBuild.result.total)}`] : [];
     const summarize = (result: BuildResult) => {
-      const gaming = result.input.objectives.includes("gaming");
-      return `Entendi: ${objectivesLabel(result.input.objectives, gaming ? result.input.resolution : undefined)} com até ${brl(result.input.budget)}. Montei uma build ${result.tier.toLowerCase()} de ${brl(result.total)}, com nota ${result.score}/100 (${scoreLabel(result.score).toLowerCase()}) para o seu uso.`;
+      const gaming = result.input.sector === "gaming";
+      return `Entendi: ${sectorLabel(result.input.sector, gaming ? result.input.resolution : undefined)} com até ${brl(result.input.budget)}. Montei uma build ${result.tier.toLowerCase()} de ${brl(result.total)}, com nota ${result.score}/100 (${scoreLabel(result.score).toLowerCase()}) para o seu uso.`;
     };
 
     const id = baseId + 1;
