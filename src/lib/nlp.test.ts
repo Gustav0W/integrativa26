@@ -22,6 +22,16 @@ describe("parseRequest", () => {
     expect(parsed.resolution).toBe("1440p");
   });
 
+  it.each([
+    ["Trabalho com recursos humanos e recrutamento", "rh"],
+    ["Sou de marketing e produzo vídeos", "marketing"],
+    ["Sou professora e uso Moodle", "educacao"],
+    ["Trabalho em uma clínica de saúde", "saude"],
+    ["Sou advogado na área jurídica", "juridico"],
+  ])("detecta o setor em: %s", (request, sector) => {
+    expect(parseRequest(request).sector).toBe(sector);
+  });
+
   it("detecta preferência de marca e ajustes", () => {
     expect(parseRequest("quero um ryzen").brand).toBe("amd");
     expect(parseRequest("quero algo mais barato").adjust).toBe("cheaper");

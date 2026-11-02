@@ -2,7 +2,7 @@
 
 import { ViewTransition, startTransition, useRef, useState } from "react";
 import { Copy, Download, RotateCcw, X } from "lucide-react";
-import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, objectivesLabel, scoreLabel } from "@/lib/engine";
+import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, scoreLabel, sectorLabel } from "@/lib/engine";
 import type { BuildResult } from "@/lib/types";
 import { PartCard } from "./part-card";
 import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, secondaryButton } from "./ui";
@@ -37,7 +37,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
   const usedPct = (result.total / result.budget) * 100;
   const remaining = result.budget - result.total;
   const bottleneckPct = Math.round(result.bottleneck * 100);
-  const gaming = input.objectives.includes("gaming");
+  const gaming = input.sector === "gaming";
   const paidParts = result.parts.filter((part) => part.price > 0);
 
   const showToast = (message: string) => {
@@ -71,7 +71,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
             </p>
             <p className="mt-2 font-mono text-4xl font-semibold tracking-tight">{brl(result.total)}</p>
             <p className="mt-1 text-sm text-muted">
-              {result.parts.length} itens · {objectivesLabel(input.objectives, gaming ? input.resolution : undefined)}
+              {result.parts.length} itens · {sectorLabel(input.sector, gaming ? input.resolution : undefined)}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">

@@ -1,4 +1,5 @@
-import type { CaseKitOption, CpuOption, GpuOption, MemoryType, MoboOption, PeripheralKit, PsuOption, RamOption, Socket, SsdOption } from "./types";
+import type { CaseKitOption, CpuOption, GpuOption, MemoryType, MoboOption, MonitorOption, PsuOption, RamOption, Sector, Socket, SsdOption } from "./types";
+
 
 /* ============================================================================
  * CATÁLOGO DE PEÇAS — preços de referência (R$, mercado brasileiro)
@@ -314,14 +315,27 @@ export const CASE_KITS: CaseKitOption[] = [
   { id: "kit-silent", name: "Gabinete Fractal Design North + Cooler Noctua NH-D15 G2", search: "Fractal Design North", coolerSearch: "Noctua NH-D15 G2", maxTdp: 260, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 88, silence: 100, price: 2299, note: "Combinação referência em silêncio: frontal em madeira/mesh e um dos coolers a ar mais silenciosos do mercado." },
 ];
 
-export const PERIPHERAL_KITS: Record<string, PeripheralKit> = {
-  basic: { id: "basic", name: "Kit Essencial: Monitor AOC 24B30HM2 24\" 100Hz + Combo Logitech MK235 sem fio", search: "Monitor AOC 24B30HM2", price: 899, note: "Monitor Full HD com 100Hz e combo teclado/mouse sem fio — confortável para estudo e trabalho." },
-  g1080: { id: "g1080", name: "Kit Gamer 1080p: Monitor AOC Gaming 24G30E 24\" 180Hz + HyperX Alloy Origins Core + Logitech G203", search: "Monitor AOC 24G30E", price: 1599, note: "Monitor de 180Hz para aproveitar o FPS alto, teclado mecânico e mouse leve." },
-  dual: { id: "dual", name: "Kit Dual Monitor: 2x Dell SE2425H 24\" IPS + Combo Logitech MK540", search: "Monitor Dell SE2425H", price: 1899, note: "Dois monitores IPS para código, documentação e reuniões lado a lado." },
-  g1440: { id: "g1440", name: "Kit Gamer 1440p: Monitor LG UltraGear 27GS75Q 27\" QHD 180Hz + Redragon Kumara Pro + Logitech G305", search: "LG UltraGear 27GS75Q", price: 2399, note: "Monitor QHD IPS de 180Hz: o casamento ideal para uma GPU de 1440p." },
-  creator: { id: "creator", name: "Kit Criador 4K: Monitor LG 27UP850 27\" 4K IPS + Logitech MX Keys S + MX Master 3S", search: "LG 27UP850", price: 3899, note: "Painel 4K IPS com ampla cobertura de cores, ideal para arquitetura e render." },
-  g4k: { id: "g4k", name: "Kit Gamer 4K: Monitor LG UltraGear 27GR93U 27\" 4K 144Hz + HyperX Alloy Origins + Logitech G Pro X Superlight", search: "LG UltraGear 27GR93U", price: 4699, note: "Monitor 4K de 144Hz para extrair tudo de uma GPU topo de linha." },
+export const SECTORS: Record<Sector, { title: string; softwares: string[] }> = {
+  contabilidade: { title: "Contabilidade", softwares: ["Alterdata", "Domínio", "Fortes", "SCI"] },
+  design: { title: "Design & Artes", softwares: ["Photoshop", "Illustrator", "InDesign", "CorelDRAW"] },
+  desenvolvimento: { title: "Desenvolvimento de Software", softwares: ["VS Code", "Visual Studio", "Docker", "Android Studio"] },
+  educacao: { title: "Educação", softwares: ["Google Workspace", "Microsoft 365", "Moodle", "Teams/Zoom"] },
+  engenharia: { title: "Engenharia & BIM", softwares: ["AutoCAD", "Revit", "SolidWorks", "SketchUp"] },
+  escritorio: { title: "Escritório / Administrativo", softwares: ["Excel Avançado", "Browser (Muitas abas)", "Teams/Zoom", "ERP"] },
+  gaming: { title: "Gaming", softwares: ["Jogos AAA", "e-Sports", "Streaming", "Emuladores"] },
+  juridico: { title: "Jurídico", softwares: ["PJe", "e-SAJ", "Projudi", "Astrea"] },
+  marketing: { title: "Marketing & Conteúdo", softwares: ["Figma", "Canva", "Photoshop", "Premiere Pro", "After Effects"] },
+  rh: { title: "Recursos Humanos", softwares: ["Senior HCM", "TOTVS RM", "Sólides", "Convenia"] },
+  saude: { title: "Saúde", softwares: ["Tasy", "MV", "iClinic", "Feegow"] },
 };
+
+export const MONITORS: MonitorOption[] = [
+  { id: "mon-100hz", name: "Monitor AOC 24\" 100Hz IPS", search: "Monitor 24 polegadas 100hz IPS", price: 650, note: "Monitor básico fluido para escritório e estudo.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 24 },
+  { id: "mon-180hz", name: "Monitor Gamer AOC 24\" 180Hz", search: "Monitor 24 polegadas 180hz", price: 850, note: "Ideal para e-Sports e jogos competitivos.", resolution: "1920x1080", panel: "VA/IPS", refreshRate: 180, size: 24 },
+  { id: "mon-qhd", name: "Monitor LG UltraGear 27\" QHD 180Hz", search: "Monitor LG UltraGear 27 QHD", price: 1899, note: "Resolução QHD para mais nitidez em jogos e produtividade.", resolution: "2560x1440", panel: "IPS", refreshRate: 180, size: 27 },
+  { id: "mon-4k", name: "Monitor LG 27\" 4K IPS", search: "Monitor LG 27 4K IPS", price: 2200, note: "Alta fidelidade de cores para design e arquitetura.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+];
+
 
 export const STORES = [
   { id: "kabum", label: "KaBuM!", url: (q: string) => `https://www.kabum.com.br/busca/${encodeURIComponent(q.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""))}` },
@@ -331,11 +345,6 @@ export const STORES = [
 
 export const googleShoppingUrl = (q: string) => `https://www.google.com/search?tbm=shop&q=${encodeURIComponent(q)}`;
 
-/* ============================================================================
- * PEÇAS DE REFERÊNCIA — modelos mais antigos ou fora do catálogo de venda.
- * Não entram nas recomendações; servem para avaliar configurações digitadas
- * ou lidas de um PDF (orçamentos de loja, PCs usados, etc.).
- * ==========================================================================*/
 
 type ReferenceCpu = Omit<CpuOption, "price" | "note" | "id"> & { note?: string };
 type ReferenceGpu = Omit<GpuOption, "price" | "note" | "id"> & { note?: string };

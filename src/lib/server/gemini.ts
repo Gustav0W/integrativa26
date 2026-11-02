@@ -1,8 +1,8 @@
 import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import { generateText, Output, type ModelMessage } from "ai";
 import { z } from "zod";
-import { CASE_KITS, CPUS, GPUS, MOBOS, PSUS, RAMS, SSDS } from "../catalog";
-import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, brl, normalizeInput, type BuildEvaluation } from "../engine";
+import { CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS } from "../catalog";
+import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, SECTOR_LABEL, brl, normalizeInput, type BuildEvaluation } from "../engine";
 import type { BuildInput, BuildResult, PromptSignals } from "../types";
 
 /* ============================================================================
@@ -78,10 +78,11 @@ const signalsSchema = z.object({
 
 const requestSchema = z.object({
   budget: z.number().nullable().describe("Orçamento máximo total em reais. null se não houver valor nem no pedido anterior."),
-  objectives: z.array(z.enum(["gaming", "arquitetura", "dev", "office"])).describe("Usos do PC. gaming = jogos; arquitetura = arquitetura, engenharia, render 3D, design; dev = programação; office = estudos, escritório, uso básico."),
+  sector: z.enum(["contabilidade", "design", "desenvolvimento", "educacao", "engenharia", "escritorio", "gaming", "juridico", "marketing", "rh", "saude"]).describe(`Setor principal selecionado. Opções e softwares: ${Object.entries(SECTORS).map(([id, sector]) => `${id}: ${sector.title} (${sector.softwares.join(", ")})`).join("; ")}`),
+  softwares: z.array(z.string()).describe("Softwares do setor selecionado, usando os nomes exatos do catálogo de setores."),
   resolution: z.enum(["1080p", "1440p", "4k"]).nullable().describe("Resolução para jogos, se citada (2K = 1440p)."),
   brand: z.enum(["any", "amd", "intel"]).describe("Preferência de marca do processador"),
-  includePeripherals: z.boolean().describe("Quer incluir monitor, teclado e mouse no orçamento"),
+  monitorId: z.string().nullable().describe(`ID do monitor escolhido, null se não incluir: ${MONITORS.map((monitor) => `${monitor.id} (${monitor.name})`).join("; ")}`),
   signals: signalsSchema,
   assumptions: z
     .array(z.string())
@@ -127,9 +128,9 @@ export async function converse(
 ): Promise<ConversationTurn> {
   const context = previous
     ? `Pedido de PC atual (JSON). Se a mensagem pedir ajuste, ATUALIZE — mantenha o que não mudou:
-${JSON.stringify({ budget: previous.budget, objectives: previous.objectives, resolution: previous.resolution, brand: previous.brand, includePeripherals: previous.includePeripherals, silent: previous.silent })}
-Regras de ajuste: "mais barato/economizar" → reduza o orçamento ~20%; "mais potente" → aumente ~25%; usos novos citados com "também" são somados; "só/apenas" troca os usos.`
-    : `Ainda não há build. Se a pessoa pedir uma e não citar orçamento, devolva budget = null; se não der para saber o uso, use ["office"] e registre a suposição.`;
+  ${JSON.stringify({ budget: previous.budget, sector: previous.sector, softwares: previous.softwares, resolution: previous.resolution, brand: previous.brand, monitorId: previous.monitorId, silent: previous.silent })}
+ Regras de ajuste: "mais barato/economizar" → reduza o orçamento ~20%; "mais potente" → aumente ~25%; atualize o setor e softwares citados; selecione monitor somente se pedido.`
+    : `Ainda não há build. Se a pessoa pedir uma e não citar orçamento, devolva budget = null; se não der para saber o setor, use "escritorio" e registre a suposição.`;
 
   const conversation = history
     .slice(-8)
@@ -172,10 +173,11 @@ ${currentBuild.length ? `\nBuild atual mostrada ao usuário:\n${currentBuild.joi
   }
   const input = normalizeInput({
     budget,
-    objectives: request.objectives.length > 0 ? request.objectives : (previous?.objectives ?? ["office"]),
+    sector: request.sector ?? previous?.sector ?? "escritorio",
+    softwares: request.softwares.length > 0 ? request.softwares : previous?.softwares ?? [],
     resolution: request.resolution ?? previous?.resolution ?? (budget >= 7000 ? "1440p" : "1080p"),
     brand: request.brand,
-    includePeripherals: request.includePeripherals,
+    monitorId: request.monitorId ?? previous?.monitorId ?? null,
     silent: request.signals.silent || Boolean(previous?.silent),
     prompt: `${previous?.prompt ?? ""} ${message}`.trim().slice(-500),
   });
@@ -202,8 +204,10 @@ export async function explainBuild(result: BuildResult): Promise<{ result: Build
   const { input } = result;
   const facts = {
     pedido: {
-      usos: input.objectives.map((o) => OBJECTIVE_LABEL[o]),
-      resolucao: input.objectives.includes("gaming") ? RESOLUTION_LABEL[input.resolution] : null,
+      setor: SECTOR_LABEL[input.sector],
+      softwares: input.softwares,
+      resolucao: input.sector === "gaming" ? RESOLUTION_LABEL[input.resolution] : null,
+      monitor: input.monitorId ? MONITORS.find((monitor) => monitor.id === input.monitorId)?.name ?? null : null,
       orcamento: brl(input.budget),
       textoDoUsuario: input.prompt || null,
     },

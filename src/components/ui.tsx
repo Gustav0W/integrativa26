@@ -3,9 +3,10 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, GraduationCap, HardDrive, MemoryStick, Monitor, Zap } from "lucide-react";
-import { BUDGET_MAX, BUDGET_MIN } from "@/lib/catalog";
+import { BUDGET_MAX, BUDGET_MIN, SECTORS } from "@/lib/catalog";
 import { brl, clampBudget } from "@/lib/engine";
-import type { InsightTone, Objective, PartCategory, Resolution } from "@/lib/types";
+import { inputClass } from "./styles";
+import type { InsightTone, Objective, PartCategory, Resolution, Sector } from "@/lib/types";
 
 /* ----------------------------------------------------------------------------
  * Categorias de peça: código curto (estilo ficha técnica) + cor da barra de custo
@@ -214,6 +215,53 @@ export function ObjectivePicker({
               { id: "4k", label: "4K" },
             ]}
           />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function SectorPicker({
+  sector,
+  onSectorChange,
+  softwares,
+  onSoftwaresChange,
+  resolution,
+  onResolutionChange,
+}: {
+  sector: Sector;
+  onSectorChange: (value: Sector) => void;
+  softwares: string[];
+  onSoftwaresChange: (value: string[]) => void;
+  resolution: Resolution;
+  onResolutionChange: (value: Resolution) => void;
+}) {
+  const toggleSoftware = (software: string) => {
+    onSoftwaresChange(softwares.includes(software) ? softwares.filter((item) => item !== software) : [...softwares, software]);
+  };
+
+  return (
+    <div>
+      <label htmlFor="sector-picker" className="label-mono mb-2 block text-subtle">Setor de atuação</label>
+      <select id="sector-picker" value={sector} onChange={(event) => { onSectorChange(event.target.value as Sector); onSoftwaresChange([]); }} className={`${inputClass} cursor-pointer`}>
+        {Object.entries(SECTORS).map(([id, item]) => <option key={id} value={id}>{item.title}</option>)}
+      </select>
+      <p className="label-mono mt-4 mb-2 text-subtle">Softwares utilizados</p>
+      <div className="grid grid-cols-2 gap-2">
+        {SECTORS[sector].softwares.map((software) => {
+          const active = softwares.includes(software);
+          return (
+            <button key={software} type="button" onClick={() => toggleSoftware(software)} aria-pressed={active} className={`flex min-w-0 items-center gap-2 border px-3 py-2 text-left text-xs transition ${active ? "border-brand bg-brand-soft" : "border-line hover:border-ink/40"}`}>
+              <span className={`flex size-3.5 shrink-0 items-center justify-center border text-[9px] leading-none ${active ? "border-brand bg-brand text-on-brand" : "border-ink/40"}`} aria-hidden>{active && "✓"}</span>
+              <span className="min-w-0 break-words">{software}</span>
+            </button>
+          );
+        })}
+      </div>
+      {sector === "gaming" && (
+        <div className="mt-4">
+          <p className="label-mono mb-2 text-subtle">Resolução para jogos</p>
+          <Segmented<Resolution> value={resolution} onChange={onResolutionChange} options={[{ id: "1080p", label: "1080p" }, { id: "1440p", label: "1440p" }, { id: "4k", label: "4K" }]} />
         </div>
       )}
     </div>

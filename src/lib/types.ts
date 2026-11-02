@@ -1,3 +1,4 @@
+export type Sector = "contabilidade" | "design" | "desenvolvimento" | "educacao" | "engenharia" | "escritorio" | "gaming" | "juridico" | "marketing" | "rh" | "saude";
 export type Objective = "gaming" | "arquitetura" | "dev" | "office";
 export type Resolution = "1080p" | "1440p" | "4k";
 export type BrandPreference = "any" | "amd" | "intel";
@@ -12,14 +13,17 @@ export type InsightTone = "success" | "info" | "warning";
 /** Dados que o usuário envia para a IA (local ou remota). */
 export interface BuildInput {
   budget: number;
-  /** Um ou mais usos do PC (ex.: arquitetura + gaming). */
-  objectives: Objective[];
+  /** Setor principal de uso. */
+  sector: Sector;
+  /** Softwares específicos do setor. */
+  softwares: string[];
   resolution: Resolution;
   brand: BrandPreference;
-  includePeripherals: boolean;
+  monitorId: string | null;
   silent: boolean;
   prompt: string;
 }
+
 
 export interface RecommendedPart {
   category: PartCategory;
@@ -136,7 +140,13 @@ export interface CaseKitOption extends CatalogItem {
   silence: number;
 }
 
-export type PeripheralKit = CatalogItem;
+export interface MonitorOption extends CatalogItem {
+  resolution: string;
+  panel: string;
+  refreshRate: number;
+  size: number;
+}
+
 
 export interface Combo {
   cpu: CpuOption;
@@ -158,6 +168,7 @@ export interface PartialBuild {
   ssd?: SsdOption;
   psu?: PsuOption;
   kit?: CaseKitOption;
+  monitor?: MonitorOption;
 }
 
 export interface PromptSignals {

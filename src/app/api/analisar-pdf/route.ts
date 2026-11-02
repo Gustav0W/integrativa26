@@ -1,8 +1,8 @@
 import { extractText, getDocumentProxy } from "unpdf";
 import { analyzeDocumentText } from "@/lib/analysis";
-import { sanitizeInput } from "@/lib/engine";
 import { geminiAvailable, modelLabel, readSpecDocument, writeVerdict } from "@/lib/server/gemini";
 import { rateLimit } from "@/lib/server/rate-limit";
+import type { Objective, Resolution } from "@/lib/types";
 
 /** Tempo máximo da função na hospedagem (Vercel etc.): o Gemini leva alguns segundos. */
 export const maxDuration = 60;
@@ -28,7 +28,11 @@ export async function POST(request: Request) {
 
   const file = form.get("file");
   const pasted = form.get("text");
-  const { objectives, resolution } = sanitizeInput({ objectives: JSON.parse(String(form.get("objectives") ?? "[]")), resolution: form.get("resolution") });
+  const parsedObjectives: unknown = JSON.parse(String(form.get("objectives") ?? "[]"));
+  const allowedObjectives: Objective[] = ["gaming", "arquitetura", "dev", "office"];
+  const objectives: Objective[] = Array.isArray(parsedObjectives) ? parsedObjectives.filter((objective): objective is Objective => allowedObjectives.includes(objective as Objective)) : ["office"];
+  const requestedResolution = form.get("resolution");
+  const resolution: Resolution = requestedResolution === "1080p" || requestedResolution === "4k" ? requestedResolution : "1440p";
 
   let text = "";
   let source = "Texto colado";
