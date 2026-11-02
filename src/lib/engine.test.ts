@@ -9,6 +9,11 @@ const cases: { name: string; input: BuildInput }[] = [
   { name: "escritório", input: { ...base, budget: 3000, sector: "escritorio", softwares: ["Excel Avançado"] } },
   { name: "engenharia", input: { ...base, budget: 9000, sector: "engenharia", softwares: ["Revit"] } },
   { name: "desenvolvimento", input: { ...base, budget: 8000, sector: "desenvolvimento", softwares: ["Docker", "Android Studio"], resolution: "1440p" } },
+  { name: "recursos humanos", input: { ...base, budget: 6000, sector: "rh", softwares: ["Senior HCM"] } },
+  { name: "marketing", input: { ...base, budget: 8000, sector: "marketing", softwares: ["Figma", "Premiere Pro"] } },
+  { name: "educação", input: { ...base, budget: 5000, sector: "educacao", softwares: ["Moodle", "Microsoft 365"] } },
+  { name: "saúde", input: { ...base, budget: 6000, sector: "saude", softwares: ["Tasy"] } },
+  { name: "jurídico", input: { ...base, budget: 6000, sector: "juridico", softwares: ["PJe", "Astrea"] } },
   { name: "preferência AMD", input: { ...base, brand: "amd" } },
   { name: "preferência Intel", input: { ...base, brand: "intel" } },
 ];

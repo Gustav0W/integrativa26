@@ -52,7 +52,7 @@ function resolveInput(text: string, previous: BuildInput | null): { input: Build
   const notes: string[] = [];
 
   if (!previous) {
-    const sector = parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : "escritorio";
+    const sector = parsed.sector ?? (parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : "escritorio");
     if (parsed.budget === null) notes.push(`Você não citou um valor, então considerei ${brl(DEFAULT_BUDGET)}. Diga, por exemplo, "até 5 mil" para ajustar.`);
     if (parsed.objectives.length === 0) notes.push("Não identifiquei o setor, então considerei escritório/administrativo. Diga quais softwares usa para ajustar a recomendação.");
     const budget = parsed.budget ?? DEFAULT_BUDGET;
@@ -82,7 +82,7 @@ function resolveInput(text: string, previous: BuildInput | null): { input: Build
     notes.push(`Aumentei o orçamento em 25%, para ${brl(clampBudget(budget))}, para buscar mais desempenho.`);
   }
 
-  const sector = parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : previous.sector;
+  const sector = parsed.sector ?? (parsed.objectives.length > 0 ? sectorFromObjectives(parsed.objectives) : previous.sector);
   const selectedSoftwares = softwareSelections(text, sector);
   const softwares = sector === previous.sector ? [...new Set([...previous.softwares, ...selectedSoftwares])] : selectedSoftwares;
   const resolution = parsed.resolution ?? previous.resolution;

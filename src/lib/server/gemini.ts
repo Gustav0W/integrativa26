@@ -78,7 +78,7 @@ const signalsSchema = z.object({
 
 const requestSchema = z.object({
   budget: z.number().nullable().describe("Orçamento máximo total em reais. null se não houver valor nem no pedido anterior."),
-  sector: z.enum(["contabilidade", "design", "desenvolvimento", "engenharia", "escritorio", "gaming"]).describe(`Setor principal selecionado. Opções e softwares: ${Object.entries(SECTORS).map(([id, sector]) => `${id}: ${sector.title} (${sector.softwares.join(", ")})`).join("; ")}`),
+  sector: z.enum(["contabilidade", "design", "desenvolvimento", "educacao", "engenharia", "escritorio", "gaming", "juridico", "marketing", "rh", "saude"]).describe(`Setor principal selecionado. Opções e softwares: ${Object.entries(SECTORS).map(([id, sector]) => `${id}: ${sector.title} (${sector.softwares.join(", ")})`).join("; ")}`),
   softwares: z.array(z.string()).describe("Softwares do setor selecionado, usando os nomes exatos do catálogo de setores."),
   resolution: z.enum(["1080p", "1440p", "4k"]).nullable().describe("Resolução para jogos, se citada (2K = 1440p)."),
   brand: z.enum(["any", "amd", "intel"]).describe("Preferência de marca do processador"),

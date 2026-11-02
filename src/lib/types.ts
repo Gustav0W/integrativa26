@@ -1,4 +1,4 @@
-export type Sector = "contabilidade" | "design" | "desenvolvimento" | "engenharia" | "escritorio" | "gaming";
+export type Sector = "contabilidade" | "design" | "desenvolvimento" | "educacao" | "engenharia" | "escritorio" | "gaming" | "juridico" | "marketing" | "rh" | "saude";
 export type Objective = "gaming" | "arquitetura" | "dev" | "office";
 export type Resolution = "1080p" | "1440p" | "4k";
 export type BrandPreference = "any" | "amd" | "intel";

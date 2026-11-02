@@ -8,7 +8,7 @@ import { CATEGORY_UI, PageIntro, Panel, SectorPicker, inputClass, primaryButton,
 import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SSDS } from "@/lib/catalog";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildPartsPrice, completeBuild, evaluateBuild, integratedGpu, requiredPsuWatts, resolveGpu } from "@/lib/engine";
 import { useSessionState } from "@/lib/session-state";
-import type { CatalogItem, Combo, Objective, PartialBuild, Resolution, Sector } from "@/lib/types";
+import type { CatalogItem, Combo, PartialBuild, Resolution, Sector } from "@/lib/types";
 
 type Slot = "cpu" | "gpu" | "mobo" | "ram" | "ssd" | "psu" | "case" | "monitor";
 type Selection = Record<Slot, string>;
@@ -94,8 +94,7 @@ export function MontarClient() {
   const [comparison, setComparison] = useState<{ combo: Combo; score: number; total: number } | null>(null);
 
   const build = useMemo(() => toBuild(selection), [selection]);
-  const objective: Objective = sector === "gaming" ? "gaming" : sector === "engenharia" || sector === "design" ? "arquitetura" : sector === "escritorio" ? "office" : "dev";
-  const evaluation = useMemo(() => evaluateBuild(build, [objective], resolution, softwares.join(" ")), [build, objective, resolution, softwares]);
+  const evaluation = useMemo(() => evaluateBuild(build, sector, resolution, "", softwares), [build, sector, resolution, softwares]);
   const chosenCount = SLOTS.filter((slot) => selection[slot]).length;
   const total = buildPartsPrice(build);
   const budgetValue = Number(budget) > 0 ? Number(budget) : null;
@@ -129,7 +128,7 @@ export function MontarClient() {
     const combo = completeBuild({}, { budget: reference, sector, softwares, resolution, brand: "any", monitorId: selection.monitor || null, silent: false, prompt: "" });
     if (!combo) return;
     const aiBuild = toBuild(fromCombo(combo, selection.monitor));
-    const aiEvaluation = evaluateBuild(aiBuild, [objective], resolution, softwares.join(" "));
+    const aiEvaluation = evaluateBuild(aiBuild, sector, resolution, "", softwares);
     setComparison({ combo, score: aiEvaluation.overall ?? 0, total: buildPartsPrice(aiBuild) });
   };
 

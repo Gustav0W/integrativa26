@@ -57,7 +57,7 @@ interface ComboAnalysis {
 const METRIC_KEYS: MetricKey[] = ["game", "render", "cpuMulti", "cpuSingle", "ram", "ssd", "mobo", "psu", "cooling"];
 
 /** Ordem de "exigência": o primeiro setor selecionado nesta lista guia os textos. */
-const SECTOR_PRIORITY: Sector[] = ["engenharia", "design", "desenvolvimento", "gaming", "contabilidade", "escritorio"];
+const SECTOR_PRIORITY: Sector[] = ["engenharia", "design", "marketing", "desenvolvimento", "gaming", "contabilidade", "rh", "saude", "juridico", "educacao", "escritorio"];
 
 /** Quanto a resolução "esconde" uma CPU mais fraca (GPU-bound em resoluções altas). */
 const CPU_RES_FACTOR: Record<Resolution, number> = { "1080p": 1, "1440p": 1.25, "4k": 1.6 };
@@ -70,8 +70,13 @@ export const SECTOR_LABEL: Record<Sector, string> = {
   engenharia: "Engenharia & BIM",
   design: "Design & Artes",
   desenvolvimento: "Desenvolvimento de Software",
+  educacao: "Educação",
   contabilidade: "Contabilidade",
   escritorio: "Escritório / Administrativo",
+  juridico: "Jurídico",
+  marketing: "Marketing & Conteúdo",
+  rh: "Recursos Humanos",
+  saude: "Saúde",
 };
 
 export const CATEGORY_LABEL: Record<PartCategory, string> = {
@@ -97,6 +102,11 @@ const BASE_WEIGHTS: Record<Sector, MetricTable> = {
   engenharia: { game: 0, render: 0.3, cpuMulti: 0.18, cpuSingle: 0.12, ram: 0.18, ssd: 0.08, mobo: 0.04, psu: 0.04, cooling: 0.06 },
   design: { game: 0.04, render: 0, cpuMulti: 0.32, cpuSingle: 0.12, ram: 0.24, ssd: 0.14, mobo: 0.05, psu: 0.03, cooling: 0.06 },
   desenvolvimento: { game: 0.02, render: 0, cpuMulti: 0.27, cpuSingle: 0.2, ram: 0.19, ssd: 0.16, mobo: 0.05, psu: 0.04, cooling: 0.07 },
+  educacao: { game: 0.02, render: 0, cpuMulti: 0.2, cpuSingle: 0.22, ram: 0.2, ssd: 0.18, mobo: 0.05, psu: 0.05, cooling: 0.08 },
+  juridico: { game: 0.01, render: 0, cpuMulti: 0.17, cpuSingle: 0.25, ram: 0.18, ssd: 0.19, mobo: 0.05, psu: 0.05, cooling: 0.1 },
+  marketing: { game: 0.02, render: 0.08, cpuMulti: 0.18, cpuSingle: 0.12, ram: 0.22, ssd: 0.19, mobo: 0.06, psu: 0.05, cooling: 0.08 },
+  rh: { game: 0.01, render: 0, cpuMulti: 0.19, cpuSingle: 0.24, ram: 0.2, ssd: 0.18, mobo: 0.05, psu: 0.05, cooling: 0.08 },
+  saude: { game: 0.01, render: 0, cpuMulti: 0.2, cpuSingle: 0.24, ram: 0.2, ssd: 0.17, mobo: 0.05, psu: 0.05, cooling: 0.08 },
   contabilidade: { game: 0.04, render: 0, cpuMulti: 0.22, cpuSingle: 0.2, ram: 0.2, ssd: 0.2, mobo: 0.05, psu: 0.04, cooling: 0.05 },
   escritorio: { game: 0.04, render: 0, cpuMulti: 0.22, cpuSingle: 0.2, ram: 0.2, ssd: 0.2, mobo: 0.05, psu: 0.04, cooling: 0.05 },
 };
@@ -118,6 +128,25 @@ const SOFTWARE_WEIGHTS: Record<string, Partial<MetricTable>> = {
   "Visual Studio": { cpuMulti: 0.06, ram: 0.05, ssd: 0.03 },
   Docker: { cpuMulti: 0.04, ram: 0.08, ssd: 0.04 },
   "Android Studio": { cpuMulti: 0.04, cpuSingle: 0.03, ram: 0.08, ssd: 0.03 },
+  "Google Workspace": { cpuSingle: 0.03, ram: 0.03 },
+  "Microsoft 365": { cpuSingle: 0.03, ram: 0.03 },
+  Moodle: { cpuSingle: 0.02, ram: 0.02 },
+  PJe: { cpuSingle: 0.03, ram: 0.02, ssd: 0.02 },
+  "e-SAJ": { cpuSingle: 0.03, ram: 0.02, ssd: 0.02 },
+  Projudi: { cpuSingle: 0.03, ram: 0.02, ssd: 0.02 },
+  Astrea: { cpuSingle: 0.03, ram: 0.03, ssd: 0.02 },
+  Figma: { render: 0.04, ram: 0.04 },
+  Canva: { render: 0.02, ram: 0.02 },
+  "Premiere Pro": { render: 0.08, cpuMulti: 0.06, ram: 0.06, ssd: 0.04 },
+  "After Effects": { render: 0.08, cpuMulti: 0.04, ram: 0.08, ssd: 0.04 },
+  "Senior HCM": { cpuSingle: 0.03, ram: 0.03 },
+  "TOTVS RM": { cpuMulti: 0.03, cpuSingle: 0.03, ram: 0.04 },
+  "Sólides": { cpuSingle: 0.02, ram: 0.02 },
+  Convenia: { cpuSingle: 0.02, ram: 0.02 },
+  Tasy: { cpuMulti: 0.04, cpuSingle: 0.03, ram: 0.05, ssd: 0.03 },
+  MV: { cpuMulti: 0.04, cpuSingle: 0.03, ram: 0.05, ssd: 0.03 },
+  iClinic: { cpuSingle: 0.03, ram: 0.03 },
+  Feegow: { cpuSingle: 0.03, ram: 0.03 },
   "Excel Avançado": { cpuSingle: 0.04, ram: 0.04 },
   "Browser (Muitas abas)": { ram: 0.08 },
   "Teams/Zoom": { cpuMulti: 0.03, ram: 0.03 },
@@ -134,16 +163,21 @@ const BASE_CAPS: Record<Sector, MetricTable> = {
   engenharia: { game: 100, render: 100, cpuMulti: 100, cpuSingle: 90, ram: 95, ssd: 86, mobo: 80, psu: 80, cooling: 88 },
   design: { game: 45, render: 100, cpuMulti: 90, cpuSingle: 85, ram: 95, ssd: 86, mobo: 70, psu: 65, cooling: 72 },
   desenvolvimento: { game: 20, render: 45, cpuMulti: 90, cpuSingle: 85, ram: 90, ssd: 85, mobo: 70, psu: 65, cooling: 72 },
+  educacao: { game: 10, render: 40, cpuMulti: 55, cpuSingle: 65, ram: 60, ssd: 60, mobo: 50, psu: 45, cooling: 50 },
+  juridico: { game: 5, render: 30, cpuMulti: 45, cpuSingle: 70, ram: 55, ssd: 65, mobo: 45, psu: 40, cooling: 45 },
+  marketing: { game: 20, render: 85, cpuMulti: 75, cpuSingle: 75, ram: 85, ssd: 80, mobo: 65, psu: 60, cooling: 70 },
+  rh: { game: 5, render: 30, cpuMulti: 50, cpuSingle: 65, ram: 60, ssd: 60, mobo: 45, psu: 40, cooling: 45 },
+  saude: { game: 5, render: 30, cpuMulti: 55, cpuSingle: 70, ram: 60, ssd: 60, mobo: 45, psu: 40, cooling: 45 },
   contabilidade: { game: 10, render: 100, cpuMulti: 45, cpuSingle: 55, ram: 45, ssd: 55, mobo: 40, psu: 30, cooling: 40 },
   escritorio: { game: 10, render: 100, cpuMulti: 45, cpuSingle: 55, ram: 45, ssd: 55, mobo: 40, psu: 30, cooling: 40 },
 };
 
 const GAME_CAP_BY_RESOLUTION: Record<Resolution, number> = { "1080p": 80, "1440p": 92, "4k": 100 };
-const LAMBDA: Record<Sector, number> = { gaming: 0.12, engenharia: 0.1, design: 0.3, desenvolvimento: 0.35, contabilidade: 1.2, escritorio: 1.2 };
+const LAMBDA: Record<Sector, number> = { gaming: 0.12, engenharia: 0.1, design: 0.3, desenvolvimento: 0.35, educacao: 1, juridico: 1, marketing: 0.3, rh: 1, saude: 1, contabilidade: 1.2, escritorio: 1.2 };
 /** Armazenamento mínimo confortável por uso (GB). */
-const STORAGE_NEED: Record<Sector, number> = { gaming: 1000, engenharia: 1000, design: 1000, desenvolvimento: 1000, contabilidade: 500, escritorio: 500 };
+const STORAGE_NEED: Record<Sector, number> = { gaming: 1000, engenharia: 1000, design: 1000, desenvolvimento: 1000, educacao: 500, juridico: 500, marketing: 1000, rh: 500, saude: 500, contabilidade: 500, escritorio: 500 };
 /** Usos que consomem muito disco: dois ou mais juntos pedem 2TB. */
-const HEAVY_STORAGE: Sector[] = ["gaming", "engenharia", "design"];
+const HEAVY_STORAGE: Sector[] = ["gaming", "engenharia", "design", "marketing"];
 
 
 const brlFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
@@ -415,12 +449,11 @@ function searchCombos(input: BuildInput, profile: Profile, limit: number, mode: 
   return best;
 }
 
-function objectiveForSector(sector: Sector): Objective {
+export function objectiveForSector(sector: Sector): Objective {
   if (sector === "gaming") return "gaming";
-  if (sector === "engenharia" || sector === "design") return "arquitetura";
+  if (sector === "engenharia" || sector === "design" || sector === "marketing") return "arquitetura";
   if (sector === "desenvolvimento") return "dev";
-  if (sector === "escritorio") return "office";
-  return "dev";
+  return "office";
 }
 
 function tierFor(pcTotal: number) {
@@ -815,7 +848,7 @@ function singleProfile(objectives: Objective[], resolution: Resolution, prompt =
   const selected: Objective[] = objectives.length > 0 ? objectives : ["office"];
   const profiles = selected.map((objective) => buildProfile({
     budget: BUDGET_MAX,
-    sector: objective === "gaming" ? "gaming" : objective === "arquitetura" ? "engenharia" : objective === "office" ? "escritorio" : "contabilidade",
+    sector: objective === "gaming" ? "gaming" : objective === "arquitetura" ? "engenharia" : objective === "office" ? "escritorio" : "desenvolvimento",
     softwares: [],
     resolution,
     brand: "any",
@@ -828,8 +861,9 @@ function singleProfile(objectives: Objective[], resolution: Resolution, prompt =
   return { ...profiles[0], weights, caps, lambda: profiles.reduce((sum, profile) => sum + profile.lambda, 0) / profiles.length, storageNeed: Math.max(...profiles.map((profile) => profile.storageNeed)) };
 }
 
-export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[], resolution: Resolution, prompt = ""): BuildEvaluation {
-  const objectives: Objective[] = rawObjectives.length > 0 ? rawObjectives : ["office"];
+export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[] | Sector, resolution: Resolution, prompt = "", softwares: string[] = []): BuildEvaluation {
+  const sector = Array.isArray(rawObjectives) ? null : rawObjectives;
+  const objectives: Objective[] = Array.isArray(rawObjectives) ? rawObjectives.length > 0 ? rawObjectives : ["office"] : [objectiveForSector(rawObjectives)];
   const has = (o: Objective) => objectives.includes(o);
   const gpu = resolveGpu(build);
   const checks = partialChecks(build);
@@ -869,7 +903,9 @@ export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[], r
     psu: build.psu ?? NEUTRAL_PSU,
     kit: build.kit ?? NEUTRAL_KIT,
   };
-  const profile = singleProfile(objectives, resolution, prompt);
+  const profile = sector
+    ? buildProfile({ budget: BUDGET_MAX, sector, softwares, resolution, brand: "any", monitorId: null, silent: false, prompt }, parsePrompt(prompt))
+    : singleProfile(objectives, resolution, prompt);
   const analysis = analyzeCombo(combo, profile);
   const fits = objectives.map((objective) => {
     const score = Math.round(analyzeCombo(combo, singleProfile([objective], resolution, prompt)).normalized);

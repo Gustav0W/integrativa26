@@ -1,5 +1,5 @@
 import { CASE_KITS, CHIPSETS, CPUS, GPUS, MOBOS, PSUS, RAMS, REFERENCE_CPUS, REFERENCE_GPUS, SSDS, genericCooler, genericMobo, genericPsu, genericRam, genericStorage } from "./catalog";
-import type { BrandPreference, CatalogItem, MemoryType, Objective, PartialBuild, PromptSignals, Resolution, SsdOption } from "./types";
+import type { BrandPreference, CatalogItem, MemoryType, Objective, PartialBuild, PromptSignals, Resolution, Sector, SsdOption } from "./types";
 
 /* ============================================================================
  * "IA" de linguagem natural local (offline).
@@ -58,6 +58,7 @@ export function parsePrompt(prompt: string): PromptSignals {
 
 export interface ParsedRequest {
   budget: number | null;
+  sector: Sector | null;
   objectives: Objective[];
   resolution: Resolution | null;
   brand: BrandPreference | null;
@@ -75,6 +76,20 @@ const OBJECTIVE_PATTERNS: Record<Objective, RegExp> = {
   dev: /program|desenvolv|codigo|\bdev\b|docker|\bvms?\b|android studio|compil|software|back-?end|front-?end|full-?stack|\bti\b|machine learning|data science|ciencia de dados/,
   office: /escritorio|\boffice\b|estud|faculdade|\baula|trabalho|home office|planilha|excel|\bword\b|navegar|internet|escola|uso basico|dia a dia/,
 };
+
+const SECTOR_PATTERNS: [Sector, RegExp][] = [
+  ["gaming", /\bjog|\bgame|gamer|gaming|valorant|fortnite|cyberpunk|baldur|\bgta\b/],
+  ["marketing", /marketing|publicidade|social media|criacao de conteudo|producao de video|designer de conteudo/],
+  ["rh", /recursos humanos|\brh\b|recrutamento|selecao de pessoas|departamento pessoal/],
+  ["saude", /\bsaude\b|clinica|hospital|consultorio|medico|enfermagem/],
+  ["juridico", /juridic|advocacia|advogado|\boab\b|escritorio de advocacia/],
+  ["educacao", /educacao|professor|docencia|ensino|escola|faculdade|sala de aula/],
+  ["contabilidade", /contabil|contador|contabilidade|escritorio contabil/],
+  ["engenharia", /engenharia|\bbim\b|revit|autocad|solidworks|sketchup/],
+  ["design", /design|ilustracao|direcao de arte/],
+  ["desenvolvimento", /program|desenvolv|\bdev\b|docker|android studio|software|\bti\b/],
+  ["escritorio", /escritorio|administrativo|home office|\boffice\b|planilha|excel/],
+];
 
 function parseMoney(raw: string) {
   return Number(raw.replace(/\./g, "").replace(",", "."));
@@ -94,6 +109,7 @@ export function parseRequest(raw: string): ParsedRequest {
   if (budget !== null && (!Number.isFinite(budget) || budget < 500)) budget = null;
 
   const objectives = (Object.keys(OBJECTIVE_PATTERNS) as Objective[]).filter((o) => OBJECTIVE_PATTERNS[o].test(text));
+  const sector = SECTOR_PATTERNS.find(([, pattern]) => pattern.test(text))?.[0] ?? null;
 
   let resolution: Resolution | null = null;
   if (/4k|2160p?|ultra ?hd/.test(text)) resolution = "4k";
@@ -114,6 +130,7 @@ export function parseRequest(raw: string): ParsedRequest {
 
   return {
     budget,
+    sector,
     objectives,
     resolution,
     brand,

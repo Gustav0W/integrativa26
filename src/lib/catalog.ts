@@ -319,9 +319,14 @@ export const SECTORS: Record<Sector, { title: string; softwares: string[] }> = {
   contabilidade: { title: "Contabilidade", softwares: ["Alterdata", "Domínio", "Fortes", "SCI"] },
   design: { title: "Design & Artes", softwares: ["Photoshop", "Illustrator", "InDesign", "CorelDRAW"] },
   desenvolvimento: { title: "Desenvolvimento de Software", softwares: ["VS Code", "Visual Studio", "Docker", "Android Studio"] },
+  educacao: { title: "Educação", softwares: ["Google Workspace", "Microsoft 365", "Moodle", "Teams/Zoom"] },
   engenharia: { title: "Engenharia & BIM", softwares: ["AutoCAD", "Revit", "SolidWorks", "SketchUp"] },
   escritorio: { title: "Escritório / Administrativo", softwares: ["Excel Avançado", "Browser (Muitas abas)", "Teams/Zoom", "ERP"] },
   gaming: { title: "Gaming", softwares: ["Jogos AAA", "e-Sports", "Streaming", "Emuladores"] },
+  juridico: { title: "Jurídico", softwares: ["PJe", "e-SAJ", "Projudi", "Astrea"] },
+  marketing: { title: "Marketing & Conteúdo", softwares: ["Figma", "Canva", "Photoshop", "Premiere Pro", "After Effects"] },
+  rh: { title: "Recursos Humanos", softwares: ["Senior HCM", "TOTVS RM", "Sólides", "Convenia"] },
+  saude: { title: "Saúde", softwares: ["Tasy", "MV", "iClinic", "Feegow"] },
 };
 
 export const MONITORS: MonitorOption[] = [
