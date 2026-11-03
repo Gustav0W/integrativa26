@@ -83,6 +83,16 @@ function conflictFor(slot: Slot, item: CatalogItem, build: PartialBuild): string
   return null;
 }
 
+/** Agrupa opções que têm seção (monitores) para exibir com <optgroup>; as demais ficam soltas. */
+function groupBySection<T extends { item: CatalogItem }>(entries: T[]): [string | null, T[]][] {
+  const groups = new Map<string | null, T[]>();
+  for (const entry of entries) {
+    const key = "group" in entry.item && typeof entry.item.group === "string" ? entry.item.group : null;
+    groups.set(key, [...(groups.get(key) ?? []), entry]);
+  }
+  return [...groups.entries()];
+}
+
 export function MontarClient() {
   const [selection, setSelection] = useSessionState<Selection>("montar:selection", EMPTY);
   const [sector, setSector] = useSessionState<Sector>("montar:sector", "gaming");
@@ -182,13 +192,21 @@ export function MontarClient() {
                       <select id={`slot-${slot}`} value={selection[slot]} onChange={(event) => choose(slot, event.target.value)} className={`${inputClass} mt-2 cursor-pointer`}>
                         <option value="">— Escolher —</option>
                         {slot === "gpu" && <option value={INTEGRATED}>{igpu ? `Usar vídeo integrado (${igpu.name.replace("Vídeo integrado ", "").replace(" (no processador)", "")})` : "Usar vídeo integrado do processador"}</option>}
-                        {visible.map(({ item, conflict }) => {
-                          return (
+                        {groupBySection(visible).map(([group, entries]) => {
+                          const options = entries.map(({ item, conflict }) => (
                             <option key={item.id} value={item.id}>
                               {conflict ? "⚠ " : ""}
                               {item.name} — {brl(item.price)}
+                              {item.estimated ? " (estimado)" : ""}
                               {conflict ? ` (${conflict})` : ""}
                             </option>
+                          ));
+                          return group ? (
+                            <optgroup key={group} label={group}>
+                              {options}
+                            </optgroup>
+                          ) : (
+                            options
                           );
                         })}
                       </select>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeLocalBuild, normalizeInput, sanitizeInput } from "./engine";
+import { MONITORS } from "./catalog";
 import type { BuildInput } from "./types";
 
 const base: BuildInput = { budget: 6000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "" };
@@ -37,7 +38,7 @@ describe("computeLocalBuild", () => {
     const without = computeLocalBuild({ ...base, budget: 9000 });
     const monitor = withMonitor.parts.find((part) => part.category === "extra");
     expect(monitor?.name).toContain("QHD");
-    expect(monitor?.price).toBe(1899);
+    expect(monitor?.price).toBe(MONITORS.find((item) => item.id === "mon-qhd")?.price);
     expect(monitor?.specs).toContain("2560x1440");
     expect(monitor?.specs).toContain("180Hz");
     expect(withMonitor.parts.every((part) => !/teclado|mouse/i.test(part.name))).toBe(true);

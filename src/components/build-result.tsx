@@ -2,7 +2,7 @@
 
 import { ViewTransition, startTransition, useRef, useState } from "react";
 import { Copy, Download, RotateCcw, X } from "lucide-react";
-import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, scoreLabel, sectorLabel } from "@/lib/engine";
+import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, catalogDateLabel, scoreLabel, sectorLabel } from "@/lib/engine";
 import type { BuildResult } from "@/lib/types";
 import { PartCard } from "./part-card";
 import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, secondaryButton } from "./ui";
@@ -216,7 +216,7 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
               <p className="label-mono mb-2 text-subtle">Como a IA entendeu o pedido</p>
               <p className="mb-5 font-mono text-xs text-muted">{result.interpretation.join("  ·  ")}</p>
               <InsightList insights={result.insights} />
-              <p className="mt-5 border-t border-line pt-3 text-[11px] text-subtle">Preços estimados de referência do mercado brasileiro. Use os links de busca para conferir o menor preço do dia.</p>
+              <p className="mt-5 border-t border-line pt-3 text-[11px] text-subtle">Preços de referência pesquisados em {catalogDateLabel()} (KaBuM!, Pichau e Terabyte, à vista). Itens marcados como “estimado” não estavam na pesquisa. Use os links de busca para conferir o menor preço do dia.</p>
             </section>
           )}
         </div>

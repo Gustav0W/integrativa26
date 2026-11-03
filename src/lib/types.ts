@@ -33,6 +33,8 @@ export interface RecommendedPart {
   specs: string[];
   /** Termos usados nos links de busca de preço (vazio = nada a comprar). */
   searchTerms: string[];
+  /** Preço estimado (a peça não estava na última pesquisa de preços). */
+  estimated?: boolean;
 }
 
 export interface CompatibilityCheck {
@@ -78,6 +80,8 @@ export interface CatalogItem {
   search: string;
   price: number;
   note: string;
+  /** Preço estimado (o modelo não estava na última pesquisa de preços). */
+  estimated?: boolean;
 }
 
 export interface CpuOption extends CatalogItem {
@@ -141,6 +145,8 @@ export interface CaseKitOption extends CatalogItem {
 }
 
 export interface MonitorOption extends CatalogItem {
+  /** Seção do catálogo (agrupa as opções nos menus). */
+  group: string;
   resolution: string;
   panel: string;
   refreshRate: number;

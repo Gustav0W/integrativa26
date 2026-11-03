@@ -268,7 +268,7 @@ export function SectorPicker({
   );
 }
 
-const BUDGET_TICKS = [2000, 5000, 10000, 15000, 20000];
+const BUDGET_TICKS = [3000, 5000, 10000, 15000, 20000];
 
 export function BudgetField({ value, onChange }: { value: number; onChange: (value: number) => void }) {
   const clamped = clampBudget(value);

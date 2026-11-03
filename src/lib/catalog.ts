@@ -7,12 +7,20 @@ import type { CaseKitOption, CpuOption, GpuOption, MemoryType, MoboOption, Monit
  * antes da apresentação ou substitua por uma API de preços no futuro.
  * ==========================================================================*/
 
-export const BUDGET_MIN = 2000;
+/**
+ * Data da última pesquisa de preços (KaBuM!, Pichau e Terabyte, à vista no PIX).
+ * Itens com `estimated: true` não estavam na pesquisa: o preço foi estimado a
+ * partir de modelos parecidos. Ao atualizar os preços, atualize esta data.
+ */
+export const CATALOG_UPDATED_AT = "2026-11-03";
+
+/** Mínimo em que ainda cabe um PC completo com os preços atuais. */
+export const BUDGET_MIN = 3000;
 export const BUDGET_MAX = 20000;
 
 export const CPUS: CpuOption[] = [
   {
-    id: "r5-5600g",
+    id: "r5-5600g", estimated: true,
     name: "AMD Ryzen 5 5600G (6C/12T, Radeon Vega 7)",
     search: "Ryzen 5 5600G",
     brand: "amd",
@@ -22,7 +30,7 @@ export const CPUS: CpuOption[] = [
     multi: 38,
     boxCooler: true,
     igpu: { name: "Radeon Vega 7", gaming: 8, render: 5 },
-    price: 629,
+    price: 789.9,
     note: "APU com vídeo integrado e cooler box incluso: o caminho mais barato para um PC completo.",
   },
   {
@@ -36,7 +44,7 @@ export const CPUS: CpuOption[] = [
     multi: 42,
     boxCooler: true,
     igpu: null,
-    price: 599,
+    price: 829.9,
     note: "Melhor custo-benefício para jogos em placas AM4 baratas, com cooler incluso.",
   },
   {
@@ -50,7 +58,7 @@ export const CPUS: CpuOption[] = [
     multi: 56,
     boxCooler: false,
     igpu: null,
-    price: 1299,
+    price: 1499.9,
     note: "O 3D V-Cache entrega FPS de CPU topo de linha mantendo a plataforma AM4 (DDR4) barata.",
   },
   {
@@ -64,7 +72,7 @@ export const CPUS: CpuOption[] = [
     multi: 50,
     boxCooler: true,
     igpu: { name: "Radeon 760M", gaming: 16, render: 9 },
-    price: 1149,
+    price: 969.9,
     note: "APU AM5 com um dos vídeos integrados mais fortes do mercado — roda e-sports sem placa dedicada.",
   },
   {
@@ -78,7 +86,7 @@ export const CPUS: CpuOption[] = [
     multi: 52,
     boxCooler: true,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 1049,
+    price: 1219.9,
     note: "Porta de entrada da plataforma AM5 com DDR5 e ótimo desempenho por real em jogos.",
   },
   {
@@ -92,7 +100,7 @@ export const CPUS: CpuOption[] = [
     multi: 58,
     boxCooler: false,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 1399,
+    price: 1569.9,
     note: "Arquitetura Zen 5 com IPC alto: excelente em jogos com consumo baixo.",
   },
   {
@@ -106,7 +114,7 @@ export const CPUS: CpuOption[] = [
     multi: 70,
     boxCooler: false,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 1899,
+    price: 1899.9,
     note: "8 núcleos Zen 5 eficientes: equilibra jogos, compilação e criação de conteúdo.",
   },
   {
@@ -120,7 +128,7 @@ export const CPUS: CpuOption[] = [
     multi: 76,
     boxCooler: false,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 3199,
+    price: 2449.9,
     note: "Referência atual em desempenho para jogos graças ao 3D V-Cache de 2ª geração.",
   },
   {
@@ -134,11 +142,11 @@ export const CPUS: CpuOption[] = [
     multi: 87,
     boxCooler: false,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 2599,
+    price: 2229.9,
     note: "12 núcleos para render, compilação e virtualização sem abrir mão de desempenho em jogos.",
   },
   {
-    id: "r9-9950x",
+    id: "r9-9950x", estimated: true,
     name: "AMD Ryzen 9 9950X (16C/32T)",
     search: "Ryzen 9 9950X",
     brand: "amd",
@@ -148,11 +156,11 @@ export const CPUS: CpuOption[] = [
     multi: 100,
     boxCooler: false,
     igpu: { name: "Radeon Graphics (2 CUs)", gaming: 3, render: 2 },
-    price: 3799,
+    price: 3499.9,
     note: "16 núcleos Zen 5: topo de linha para render em CPU, VMs e compilação pesada.",
   },
   {
-    id: "i3-12100",
+    id: "i3-12100", estimated: true,
     name: "Intel Core i3-12100 (4C/8T, UHD 730)",
     search: "Core i3-12100",
     brand: "intel",
@@ -162,7 +170,7 @@ export const CPUS: CpuOption[] = [
     multi: 28,
     boxCooler: true,
     igpu: { name: "Intel UHD 730", gaming: 4, render: 3 },
-    price: 579,
+    price: 709.9,
     note: "Quad-core moderno com vídeo integrado, ideal para estudos e escritório.",
   },
   {
@@ -176,7 +184,7 @@ export const CPUS: CpuOption[] = [
     multi: 45,
     boxCooler: true,
     igpu: null,
-    price: 679,
+    price: 789.9,
     note: "Seis núcleos de alto desempenho a preço baixo; exige placa de vídeo dedicada (sufixo F).",
   },
   {
@@ -190,7 +198,7 @@ export const CPUS: CpuOption[] = [
     multi: 62,
     boxCooler: true,
     igpu: null,
-    price: 1099,
+    price: 1199.9,
     note: "Núcleos P + E dão fôlego para jogar e fazer stream ao mesmo tempo.",
   },
   {
@@ -204,11 +212,11 @@ export const CPUS: CpuOption[] = [
     multi: 76,
     boxCooler: false,
     igpu: null,
-    price: 1549,
+    price: 1549.9,
     note: "14 núcleos com clocks altos: forte em jogos e em produtividade multitarefa.",
   },
   {
-    id: "u5-245k",
+    id: "u5-245k", estimated: true,
     name: "Intel Core Ultra 5 245K (14C/14T)",
     search: "Core Ultra 5 245K",
     brand: "intel",
@@ -218,11 +226,11 @@ export const CPUS: CpuOption[] = [
     multi: 76,
     boxCooler: false,
     igpu: { name: "Intel Graphics (Xe)", gaming: 11, render: 8 },
-    price: 1749,
+    price: 1869.9,
     note: "Plataforma Intel mais recente (LGA1851), eficiente e com NPU para recursos de IA.",
   },
   {
-    id: "u7-265k",
+    id: "u7-265k", estimated: true,
     name: "Intel Core Ultra 7 265K (20C/20T)",
     search: "Core Ultra 7 265K",
     brand: "intel",
@@ -232,11 +240,11 @@ export const CPUS: CpuOption[] = [
     multi: 91,
     boxCooler: false,
     igpu: { name: "Intel Graphics (Xe)", gaming: 12, render: 9 },
-    price: 2299,
+    price: 2489.9,
     note: "20 núcleos com ótimo custo por núcleo — excelente para render, compilação e Revit.",
   },
   {
-    id: "u9-285k",
+    id: "u9-285k", estimated: true,
     name: "Intel Core Ultra 9 285K (24C/24T)",
     search: "Core Ultra 9 285K",
     brand: "intel",
@@ -246,73 +254,75 @@ export const CPUS: CpuOption[] = [
     multi: 99,
     boxCooler: false,
     igpu: { name: "Intel Graphics (Xe)", gaming: 12, render: 9 },
-    price: 3599,
+    price: 3499.9,
     note: "Topo da Intel para estações de trabalho: 24 núcleos e suporte a DDR5 de alta frequência.",
   },
 ];
 
 export const MOBOS: MoboOption[] = [
-  { id: "a520m", name: "ASUS Prime A520M-K", search: "ASUS Prime A520M-K", socket: "AM4", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 105, score: 30, price: 379, note: "Chipset A520 de entrada: cumpre o básico com estabilidade para CPUs de 65W." },
-  { id: "b550m", name: "Gigabyte B550M Aorus Elite", search: "Gigabyte B550M Aorus Elite", socket: "AM4", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 170, score: 55, price: 749, note: "B550 com VRM reforçado e PCIe 4.0 para SSD e placa de vídeo." },
-  { id: "a620m", name: "ASRock A620M-HDV/M.2+", search: "ASRock A620M-HDV/M.2+", socket: "AM5", memory: "DDR5", formFactor: "mATX", wifi: false, maxCpuPower: 120, score: 40, price: 649, note: "Entrada mais barata da plataforma AM5, com slot M.2 e DDR5." },
-  { id: "b650m", name: "MSI B650M Gaming Plus WiFi", search: "MSI B650M Gaming Plus WiFi", socket: "AM5", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 230, score: 65, price: 1099, note: "B650 com Wi-Fi 6E, bom VRM e dois slots M.2 — escolha equilibrada em AM5." },
-  { id: "b850", name: "ASUS TUF Gaming B850-Plus WiFi", search: "ASUS TUF Gaming B850-Plus WiFi", socket: "AM5", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 250, score: 80, price: 1699, note: "B850 com PCIe 5.0 no M.2, Wi-Fi 7 e VRM robusto para CPUs de 12–16 núcleos." },
-  { id: "x870", name: "MSI MAG X870 Tomahawk WiFi", search: "MSI MAG X870 Tomahawk WiFi", socket: "AM5", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 92, price: 2399, note: "X870 com USB4, PCIe 5.0 na GPU e no SSD e VRM topo para Ryzen 9." },
-  { id: "h610m", name: "ASUS Prime H610M-E D4", search: "ASUS Prime H610M-E D4", socket: "LGA1700", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 125, score: 28, price: 429, note: "Entrada LGA1700 com DDR4 — barata e suficiente para i3/i5 sem overclock." },
-  { id: "b760m-d4", name: "Gigabyte B760M Gaming X DDR4", search: "Gigabyte B760M Gaming X DDR4", socket: "LGA1700", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 200, score: 50, price: 849, note: "B760 DDR4 com bom VRM: aproveita memórias DDR4, mais baratas." },
-  { id: "b760m-d5", name: "MSI MAG B760M Mortar WiFi", search: "MSI MAG B760M Mortar WiFi", socket: "LGA1700", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 253, score: 70, price: 1349, note: "B760 DDR5 com Wi-Fi e VRM sólido para i5/i7 de 14ª geração." },
-  { id: "z790", name: "ASUS TUF Gaming Z790-Plus WiFi", search: "ASUS TUF Gaming Z790-Plus WiFi", socket: "LGA1700", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 85, price: 2099, note: "Z790 libera overclock nos processadores K e tem VRM para i7/i9." },
-  { id: "b860m", name: "Gigabyte B860M Aorus Elite WiFi6E", search: "Gigabyte B860M Aorus Elite WiFi6E", socket: "LGA1851", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 250, score: 72, price: 1449, note: "B860 da nova plataforma Intel, com Wi-Fi 6E e suporte a DDR5 rápida." },
-  { id: "z890", name: "MSI MAG Z890 Tomahawk WiFi", search: "MSI MAG Z890 Tomahawk WiFi", socket: "LGA1851", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 92, price: 2699, note: "Z890 topo para Core Ultra K, com Thunderbolt 4 e VRM para 250W+." },
+  { id: "a520m", name: "MSI A520M-A PRO", search: "MSI A520M-A PRO", socket: "AM4", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 105, score: 30, price: 414.9, note: "Chipset A520 de entrada: cumpre o básico com estabilidade para CPUs de 65W." },
+  { id: "b550m", name: "Asus TUF Gaming B550M-Plus", search: "Asus TUF Gaming B550M-Plus", socket: "AM4", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 170, score: 55, price: 909.9, note: "B550 com VRM reforçado e PCIe 4.0 para SSD e placa de vídeo." },
+  { id: "a620m", name: "ASRock A620M-HDV/M.2+", search: "ASRock A620M-HDV/M.2+", socket: "AM5", memory: "DDR5", formFactor: "mATX", wifi: false, maxCpuPower: 120, score: 40, price: 689.9, note: "Entrada mais barata da plataforma AM5, com slot M.2 e DDR5." },
+  { id: "b650m", name: "Gigabyte B650M Gaming WiFi", search: "Gigabyte B650M Gaming WiFi", socket: "AM5", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 230, score: 65, price: 949.9, note: "B650 com Wi-Fi 6E, bom VRM e dois slots M.2 — escolha equilibrada em AM5." },
+  { id: "b850", name: "Gigabyte B850M Aorus Elite WIFI6E", search: "Gigabyte B850M Aorus Elite WIFI6E", socket: "AM5", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 250, score: 80, price: 1689.9, note: "B850 com PCIe 5.0 no M.2, Wi-Fi 6E e VRM robusto para CPUs de 12–16 núcleos." },
+  { id: "x870", name: "Asus ROG Strix X870-F Gaming WiFi", search: "Asus ROG Strix X870-F Gaming WiFi", socket: "AM5", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 92, price: 3099.9, note: "X870 com USB4, PCIe 5.0 na GPU e no SSD e VRM topo para Ryzen 9." },
+  { id: "h610m", name: "MSI PRO H610M-G", search: "MSI PRO H610M-G", socket: "LGA1700", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 125, score: 28, price: 529.9, note: "Entrada LGA1700 com DDR4 — barata e suficiente para i3/i5 sem overclock." },
+  { id: "b760m-d4", estimated: true, name: "Gigabyte B760M Gaming X DDR4", search: "Gigabyte B760M Gaming X DDR4", socket: "LGA1700", memory: "DDR4", formFactor: "mATX", wifi: false, maxCpuPower: 200, score: 50, price: 889.9, note: "B760 DDR4 com bom VRM: aproveita memórias DDR4, mais baratas." },
+  { id: "b760m-d5", name: "Gigabyte B760M Aorus Elite", search: "Gigabyte B760M Aorus Elite", socket: "LGA1700", memory: "DDR5", formFactor: "mATX", wifi: false, maxCpuPower: 253, score: 70, price: 1169.9, note: "B760 DDR5 com VRM sólido para i5/i7 de 14ª geração." },
+  { id: "z790", name: "ASUS TUF Gaming Z790-Plus WiFi", search: "ASUS TUF Gaming Z790-Plus WiFi", socket: "LGA1700", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 85, price: 1999.9, note: "Z790 libera overclock nos processadores K e tem VRM para i7/i9." },
+  { id: "b860m", estimated: true, name: "Gigabyte B860M Aorus Elite WiFi6E", search: "Gigabyte B860M Aorus Elite WiFi6E", socket: "LGA1851", memory: "DDR5", formFactor: "mATX", wifi: true, maxCpuPower: 250, score: 72, price: 1599.9, note: "B860 da nova plataforma Intel, com Wi-Fi 6E e suporte a DDR5 rápida." },
+  { id: "z890", name: "Asus Prime Z890-P WiFi", search: "Asus Prime Z890-P WiFi", socket: "LGA1851", memory: "DDR5", formFactor: "ATX", wifi: true, maxCpuPower: 300, score: 85, price: 2149.9, note: "Z890 para Core Ultra K, com PCIe 5.0, Wi-Fi e VRM para 250W+." },
 ];
 
 export const RAMS: RamOption[] = [
-  { id: "ddr4-16", name: "Kingston Fury Beast 16GB (2x8GB) DDR4 3200MHz", search: "Kingston Fury Beast 16GB 2x8 DDR4 3200", memory: "DDR4", capacity: 16, score: 35, price: 279, note: "Kit dual channel DDR4 confiável e barato." },
-  { id: "ddr4-32", name: "Corsair Vengeance LPX 32GB (2x16GB) DDR4 3600MHz", search: "Corsair Vengeance LPX 32GB 2x16 DDR4 3600", memory: "DDR4", capacity: 32, score: 62, price: 549, note: "32GB DDR4 em dual channel com latência baixa." },
-  { id: "ddr4-64", name: "Kingston Fury Beast 64GB (2x32GB) DDR4 3200MHz", search: "Kingston Fury Beast 64GB 2x32 DDR4 3200", memory: "DDR4", capacity: 64, score: 82, price: 1099, note: "64GB DDR4: muita memória para VMs e projetos grandes pagando pouco." },
-  { id: "ddr5-16", name: "Kingston Fury Beast 16GB (2x8GB) DDR5 5600MHz", search: "Kingston Fury Beast 16GB 2x8 DDR5 5600", memory: "DDR5", capacity: 16, score: 45, price: 449, note: "DDR5 5600MHz em dual channel, base da plataforma moderna." },
-  { id: "ddr5-32", name: "Kingston Fury Beast 32GB (2x16GB) DDR5 6000MHz CL30", search: "Kingston Fury Beast 32GB 2x16 DDR5 6000 CL30", memory: "DDR5", capacity: 32, score: 75, price: 849, note: "DDR5 6000MHz CL30 — o ponto ideal (sweet spot) para Ryzen AM5 e Core Ultra." },
-  { id: "ddr5-64", name: "Corsair Vengeance 64GB (2x32GB) DDR5 6000MHz CL30", search: "Corsair Vengeance 64GB 2x32 DDR5 6000 CL30", memory: "DDR5", capacity: 64, score: 95, price: 1699, note: "64GB DDR5 6000MHz CL30 para estações de trabalho e cenas 3D gigantes." },
+  { id: "ddr4-8", name: "Kingston Fury Beast 8GB (1x8GB) DDR4 3200MHz", search: "Kingston Fury Beast 8GB DDR4 3200", memory: "DDR4", capacity: 8, score: 12, price: 399.9, note: "Pente único de 8GB: o mínimo para começar, com espaço para um segundo pente depois." },
+  { id: "ddr4-16", name: "Kingston Fury Beast 16GB (2x8GB) DDR4 3200MHz", search: "Kingston Fury Beast 16GB 2x8 DDR4 3200", memory: "DDR4", capacity: 16, score: 35, price: 779.9, note: "Kit dual channel DDR4 confiável e barato." },
+  { id: "ddr4-32", name: "Kingston Fury Beast 32GB (2x16GB) DDR4 3600MHz CL18", search: "Kingston Fury Beast 32GB 2x16 DDR4 3600", memory: "DDR4", capacity: 32, score: 62, price: 1529.9, note: "32GB DDR4 em dual channel com latência baixa." },
+  { id: "ddr4-64", estimated: true, name: "Kingston Fury Beast 64GB (2x32GB) DDR4 3200MHz", search: "Kingston Fury Beast 64GB 2x32 DDR4 3200", memory: "DDR4", capacity: 64, score: 82, price: 2999.9, note: "64GB DDR4: muita memória para VMs e projetos grandes pagando pouco." },
+  { id: "ddr5-16", estimated: true, name: "Kingston Fury Beast 16GB (2x8GB) DDR5 5600MHz", search: "Kingston Fury Beast 16GB 2x8 DDR5 5600", memory: "DDR5", capacity: 16, score: 45, price: 1049.9, note: "DDR5 5600MHz em dual channel, base da plataforma moderna." },
+  { id: "ddr5-32", name: "Kingston Fury Beast RGB 32GB (2x16GB) DDR5 6000MHz CL30", search: "Kingston Fury Beast RGB 32GB 2x16 DDR5 6000 CL30", memory: "DDR5", capacity: 32, score: 75, price: 2199.9, note: "DDR5 6000MHz CL30 — o ponto ideal (sweet spot) para Ryzen AM5 e Core Ultra." },
+  { id: "ddr5-64", name: "Kingston Fury Beast RGB 64GB (2x32GB) DDR5 6000MHz CL30", search: "Kingston Fury Beast RGB 64GB 2x32 DDR5 6000 CL30", memory: "DDR5", capacity: 64, score: 95, price: 3899.9, note: "64GB DDR5 6000MHz CL30 para estações de trabalho e cenas 3D gigantes." },
 ];
 
 export const SSDS: SsdOption[] = [
-  { id: "nv3-500", name: "Kingston NV3 500GB NVMe PCIe 4.0", search: "Kingston NV3 500GB", capacity: 500, score: 28, kind: "nvme", price: 219, note: "NVMe PCIe 4.0 de entrada: o Windows inicia em segundos." },
-  { id: "sn580-1tb", name: "WD Blue SN580 1TB NVMe PCIe 4.0", search: "WD Blue SN580 1TB", capacity: 1000, score: 55, kind: "nvme", price: 399, note: "NVMe PCIe 4.0 eficiente e frio, com ótimo custo por GB." },
-  { id: "990evo-2tb", name: "Samsung 990 EVO Plus 2TB NVMe PCIe 4.0", search: "Samsung 990 EVO Plus 2TB", capacity: 2000, score: 76, kind: "nvme", price: 849, note: "2TB com leitura de até 7.250 MB/s — espaço para dezenas de jogos e projetos." },
-  { id: "sn850x-2tb", name: "WD Black SN850X 2TB NVMe PCIe 4.0", search: "WD Black SN850X 2TB", capacity: 2000, score: 86, kind: "nvme", price: 1099, note: "Um dos SSDs PCIe 4.0 mais rápidos, com cache generoso e suporte a DirectStorage." },
-  { id: "990pro-4tb", name: "Samsung 990 Pro 4TB NVMe PCIe 4.0", search: "Samsung 990 Pro 4TB", capacity: 4000, score: 100, kind: "nvme", price: 2199, note: "4TB de altíssimo desempenho para bibliotecas de assets, renders e VMs." },
+  { id: "a400-480", name: "Kingston A400 480GB SATA III", search: "Kingston A400 480GB", capacity: 480, score: 18, kind: "sata", price: 479.9, note: "SSD SATA de entrada: bem mais rápido que um HD, ideal para orçamentos apertados." },
+  { id: "nv3-500", name: "Kingston NV3 500GB NVMe PCIe 4.0", search: "Kingston NV3 500GB", capacity: 500, score: 28, kind: "nvme", price: 629.9, note: "NVMe PCIe 4.0 de entrada: o Windows inicia em segundos." },
+  { id: "sn580-1tb", name: "Kingston NV3 1TB NVMe PCIe 4.0", search: "Kingston NV3 1TB", capacity: 1000, score: 55, kind: "nvme", price: 1069.9, note: "NVMe PCIe 4.0 com até 6.000 MB/s e ótimo custo por GB." },
+  { id: "990evo-2tb", name: "Kingston NV3 2TB NVMe PCIe 4.0", search: "Kingston NV3 2TB", capacity: 2000, score: 72, kind: "nvme", price: 1999.9, note: "2TB com leitura de até 6.000 MB/s — espaço para dezenas de jogos e projetos." },
+  { id: "sn850x-2tb", name: "WD Black SN850X 2TB NVMe PCIe 4.0", search: "WD Black SN850X 2TB", capacity: 2000, score: 86, kind: "nvme", price: 2549.9, note: "Um dos SSDs PCIe 4.0 mais rápidos, com cache generoso e suporte a DirectStorage." },
+  { id: "990pro-4tb", estimated: true, name: "Samsung 990 Pro 4TB NVMe PCIe 4.0", search: "Samsung 990 Pro 4TB", capacity: 4000, score: 100, kind: "nvme", price: 4999.9, note: "4TB de altíssimo desempenho para bibliotecas de assets, renders e VMs." },
 ];
 
 export const GPUS: GpuOption[] = [
-  { id: "rtx3050", name: "NVIDIA GeForce RTX 3050 6GB", search: "RTX 3050 6GB", brand: "nvidia", vram: 6, power: 70, minPsu: 550, gaming: 24, render: 22, price: 1099, note: "Placa de entrada da NVIDIA com DLSS; boa para e-sports em 1080p." },
-  { id: "rx6600", name: "AMD Radeon RX 6600 8GB", search: "Radeon RX 6600 8GB", brand: "amd", vram: 8, power: 132, minPsu: 450, gaming: 34, render: 18, price: 1249, note: "Uma das placas com melhor custo por FPS em 1080p no mercado brasileiro." },
-  { id: "b580", name: "Intel Arc B580 12GB", search: "Intel Arc B580", brand: "intel", vram: 12, power: 190, minPsu: 600, gaming: 44, render: 30, price: 1849, note: "12GB de VRAM e XeSS a preço intermediário — ótimo valor em 1080p/1440p." },
-  { id: "rtx5060", name: "NVIDIA GeForce RTX 5060 8GB", search: "RTX 5060 8GB", brand: "nvidia", vram: 8, power: 145, minPsu: 550, gaming: 48, render: 46, price: 2099, note: "Arquitetura Blackwell com DLSS 4 e Multi Frame Generation, muito eficiente." },
-  { id: "rx9060xt", name: "AMD Radeon RX 9060 XT 16GB", search: "RX 9060 XT 16GB", brand: "amd", vram: 16, power: 160, minPsu: 450, gaming: 53, render: 34, price: 2499, note: "16GB de VRAM e FSR 4: sobra memória para texturas no Ultra." },
-  { id: "rtx5060ti", name: "NVIDIA GeForce RTX 5060 Ti 16GB", search: "RTX 5060 Ti 16GB", brand: "nvidia", vram: 16, power: 180, minPsu: 600, gaming: 57, render: 56, price: 2999, note: "16GB de VRAM + DLSS 4: versátil para jogos e para IA/render com CUDA." },
-  { id: "rtx5070", name: "NVIDIA GeForce RTX 5070 12GB", search: "RTX 5070 12GB", brand: "nvidia", vram: 12, power: 250, minPsu: 650, gaming: 72, render: 68, price: 3999, note: "Alto nível em 1440p com DLSS 4 e ray tracing competente." },
-  { id: "rx9070", name: "AMD Radeon RX 9070 16GB", search: "RX 9070 16GB", brand: "amd", vram: 16, power: 220, minPsu: 650, gaming: 73, render: 46, price: 4099, note: "16GB e excelente desempenho de rasterização em 1440p com consumo controlado." },
-  { id: "rx9070xt", name: "AMD Radeon RX 9070 XT 16GB", search: "RX 9070 XT 16GB", brand: "amd", vram: 16, power: 304, minPsu: 750, gaming: 80, render: 50, price: 4699, note: "Rasterização de classe alta e 16GB de VRAM: forte para 1440p Ultra e 4K com FSR 4." },
-  { id: "rtx5070ti", name: "NVIDIA GeForce RTX 5070 Ti 16GB", search: "RTX 5070 Ti 16GB", brand: "nvidia", vram: 16, power: 300, minPsu: 750, gaming: 84, render: 82, price: 6199, note: "16GB de VRAM e CUDA/OptiX: referência para 1440p com alto FPS, 4K e render 3D." },
-  { id: "rtx5080", name: "NVIDIA GeForce RTX 5080 16GB", search: "RTX 5080 16GB", brand: "nvidia", vram: 16, power: 360, minPsu: 850, gaming: 92, render: 90, price: 7999, note: "Placa entusiasta para 4K com ray tracing e render por GPU de cenas pesadas." },
+  { id: "rtx3050", name: "NVIDIA GeForce RTX 3050 6GB", search: "RTX 3050 6GB", brand: "nvidia", vram: 6, power: 70, minPsu: 550, gaming: 24, render: 22, price: 1449.9, note: "Placa de entrada da NVIDIA com DLSS; boa para e-sports em 1080p." },
+  { id: "rx6600", name: "AMD Radeon RX 6600 8GB", search: "Radeon RX 6600 8GB", brand: "amd", vram: 8, power: 132, minPsu: 450, gaming: 34, render: 18, price: 1549.9, note: "Uma das placas com melhor custo por FPS em 1080p no mercado brasileiro." },
+  { id: "b580", name: "Intel Arc B580 12GB", search: "Intel Arc B580", brand: "intel", vram: 12, power: 190, minPsu: 600, gaming: 44, render: 30, price: 2089.9, note: "12GB de VRAM e XeSS a preço intermediário — ótimo valor em 1080p/1440p." },
+  { id: "rtx5060", name: "NVIDIA GeForce RTX 5060 8GB", search: "RTX 5060 8GB", brand: "nvidia", vram: 8, power: 145, minPsu: 550, gaming: 48, render: 46, price: 2869.9, note: "Arquitetura Blackwell com DLSS 4 e Multi Frame Generation, muito eficiente." },
+  { id: "rx9060xt", name: "AMD Radeon RX 9060 XT 16GB", search: "RX 9060 XT 16GB", brand: "amd", vram: 16, power: 160, minPsu: 450, gaming: 53, render: 34, price: 3599.9, note: "16GB de VRAM e FSR 4: sobra memória para texturas no Ultra." },
+  { id: "rtx5060ti", name: "NVIDIA GeForce RTX 5060 Ti 16GB", search: "RTX 5060 Ti 16GB", brand: "nvidia", vram: 16, power: 180, minPsu: 600, gaming: 57, render: 56, price: 3879.9, note: "16GB de VRAM + DLSS 4: versátil para jogos e para IA/render com CUDA." },
+  { id: "rtx5070", name: "NVIDIA GeForce RTX 5070 12GB", search: "RTX 5070 12GB", brand: "nvidia", vram: 12, power: 250, minPsu: 650, gaming: 72, render: 68, price: 4899.9, note: "Alto nível em 1440p com DLSS 4 e ray tracing competente." },
+  { id: "rx9070", name: "AMD Radeon RX 9070 16GB", search: "RX 9070 16GB", brand: "amd", vram: 16, power: 220, minPsu: 650, gaming: 73, render: 46, price: 4999.9, note: "16GB e excelente desempenho de rasterização em 1440p com consumo controlado." },
+  { id: "rx9070xt", name: "AMD Radeon RX 9070 XT 16GB", search: "RX 9070 XT 16GB", brand: "amd", vram: 16, power: 304, minPsu: 750, gaming: 80, render: 50, price: 5849.9, note: "Rasterização de classe alta e 16GB de VRAM: forte para 1440p Ultra e 4K com FSR 4." },
+  { id: "rtx5070ti", name: "NVIDIA GeForce RTX 5070 Ti 16GB", search: "RTX 5070 Ti 16GB", brand: "nvidia", vram: 16, power: 300, minPsu: 750, gaming: 84, render: 82, price: 6799.9, note: "16GB de VRAM e CUDA/OptiX: referência para 1440p com alto FPS, 4K e render 3D." },
+  { id: "rtx5080", name: "NVIDIA GeForce RTX 5080 16GB", search: "RTX 5080 16GB", brand: "nvidia", vram: 16, power: 360, minPsu: 850, gaming: 92, render: 90, price: 9499.9, note: "Placa entusiasta para 4K com ray tracing e render por GPU de cenas pesadas." },
 ];
 
 export const PSUS: PsuOption[] = [
-  { id: "cv450", name: "Corsair CV450 450W 80 Plus Bronze", search: "Corsair CV450", watts: 450, rating: "80 Plus Bronze", score: 20, price: 269, note: "Fonte 80 Plus Bronze honesta para PCs sem placa de vídeo dedicada." },
-  { id: "a550bn", name: "MSI MAG A550BN 550W 80 Plus Bronze", search: "MSI MAG A550BN", watts: 550, rating: "80 Plus Bronze", score: 30, price: 329, note: "80 Plus Bronze com proteções completas (OVP/OCP/SCP)." },
-  { id: "cx650", name: "Corsair CX650 650W 80 Plus Bronze", search: "Corsair CX650", watts: 650, rating: "80 Plus Bronze", score: 45, price: 429, note: "Linha consagrada da Corsair, estável para GPUs intermediárias." },
-  { id: "a750gl", name: "MSI MAG A750GL PCIE5 750W 80 Plus Gold", search: "MSI MAG A750GL PCIE5", watts: 750, rating: "80 Plus Gold", score: 65, price: 629, note: "80 Plus Gold com conector 12V-2x6 (PCIe 5.0) nativo para GPUs modernas." },
-  { id: "rm850e", name: "Corsair RM850e 850W 80 Plus Gold ATX 3.1", search: "Corsair RM850e", watts: 850, rating: "80 Plus Gold", score: 80, price: 849, note: "ATX 3.1 totalmente modular, 80 Plus Gold e ventoinha silenciosa (modo zero RPM)." },
-  { id: "rm1000x", name: "Corsair RM1000x 1000W 80 Plus Gold ATX 3.1", search: "Corsair RM1000x", watts: 1000, rating: "80 Plus Gold", score: 92, price: 1299, note: "1000W Gold ATX 3.1 com folga de sobra para GPUs topo e upgrades futuros." },
+  { id: "cv450", name: "MSI MAG A600DN 600W 80 Plus", search: "MSI MAG A600DN", watts: 600, rating: "80 Plus", score: 20, price: 289.9, note: "Fonte de entrada com PFC ativo, suficiente para PCs sem placa de vídeo dedicada." },
+  { id: "a550bn", name: "MSI MAG A650BN 650W 80 Plus Bronze", search: "MSI MAG A650BN", watts: 650, rating: "80 Plus Bronze", score: 30, price: 339.9, note: "80 Plus Bronze com proteções completas (OVP/OCP/SCP)." },
+  { id: "cx650", name: "Cooler Master MWE Bronze V2 750W", search: "Cooler Master MWE Bronze V2 750W", watts: 750, rating: "80 Plus Bronze", score: 45, price: 479.9, note: "750W Bronze com folga para GPUs intermediárias." },
+  { id: "a750gl", name: "MSI MAG A750GL PCIE5 750W 80 Plus Gold", search: "MSI MAG A750GL PCIE5", watts: 750, rating: "80 Plus Gold", score: 65, price: 609.9, note: "80 Plus Gold com conector 12V-2x6 (PCIe 5.0) nativo para GPUs modernas." },
+  { id: "rm850e", name: "Corsair RM850e 850W 80 Plus Gold ATX 3.1", search: "Corsair RM850e", watts: 850, rating: "80 Plus Gold", score: 80, price: 849.9, note: "ATX 3.1 totalmente modular, 80 Plus Gold e ventoinha silenciosa (modo zero RPM)." },
+  { id: "rm1000x", name: "XPG Core Reactor II 1000W 80 Plus Gold", search: "XPG Core Reactor II 1000W", watts: 1000, rating: "80 Plus Gold", score: 92, price: 999.9, note: "1000W Gold ATX 3.0 totalmente modular, com folga para GPUs topo e upgrades futuros." },
 ];
 
 export const CASE_KITS: CaseKitOption[] = [
-  { id: "kit-box", name: "Gabinete Montech AIR 100 Lite + Cooler box do processador", search: "Montech AIR 100 Lite", coolerSearch: null, maxTdp: 95, formFactors: ["mATX"], usesBoxCooler: true, cooling: 22, silence: 15, price: 219, note: "Gabinete compacto com boa ventilação frontal, aproveitando o cooler que já vem com o processador." },
-  { id: "kit-budget", name: "Gabinete Montech X3 Mesh + Cooler DeepCool AG400", search: "Montech X3 Mesh", coolerSearch: "DeepCool AG400", maxTdp: 180, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 38, silence: 25, price: 449, note: "Frontal mesh com 6 fans inclusos e cooler tower de 4 heatpipes." },
-  { id: "kit-entry", name: "Gabinete Montech AIR 903 Base + Cooler DeepCool AK400", search: "Montech AIR 903 Base", coolerSearch: "DeepCool AK400", maxTdp: 200, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 50, silence: 40, price: 649, note: "Ótimo fluxo de ar com 3 fans de 140mm e cooler tower silencioso." },
-  { id: "kit-mid", name: "Gabinete Lian Li Lancool 207 + Cooler Thermalright Peerless Assassin 120 SE", search: "Lian Li Lancool 207", coolerSearch: "Thermalright Peerless Assassin 120 SE", maxTdp: 245, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 72, silence: 58, price: 899, note: "Fluxo de ar excelente e cooler dual tower que rivaliza com water coolers." },
-  { id: "kit-aio", name: "Gabinete NZXT H6 Flow + Water Cooler Arctic Liquid Freezer III Pro 360", search: "NZXT H6 Flow", coolerSearch: "Arctic Liquid Freezer III Pro 360", maxTdp: 320, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 95, silence: 72, price: 1699, note: "Water cooler de 360mm para CPUs de alto consumo e visual panorâmico." },
-  { id: "kit-silent", name: "Gabinete Fractal Design North + Cooler Noctua NH-D15 G2", search: "Fractal Design North", coolerSearch: "Noctua NH-D15 G2", maxTdp: 260, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 88, silence: 100, price: 2299, note: "Combinação referência em silêncio: frontal em madeira/mesh e um dos coolers a ar mais silenciosos do mercado." },
+  { id: "kit-box", name: "Gabinete Pichau Apus Black + Cooler box do processador", search: "Gabinete Pichau Apus Black", coolerSearch: null, maxTdp: 95, formFactors: ["mATX", "ATX"], usesBoxCooler: true, cooling: 22, silence: 15, price: 219.9, note: "Gabinete mid-tower com 3 fans, aproveitando o cooler que já vem com o processador." },
+  { id: "kit-budget", name: "Gabinete Pichau Apus Black + Cooler DeepCool AK400", search: "Gabinete Pichau Apus Black", coolerSearch: "DeepCool AK400", maxTdp: 180, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 38, silence: 25, price: 399.8, note: "Gabinete com 3 fans e cooler tower de 4 heatpipes." },
+  { id: "kit-entry", name: "Gabinete Montech X3 Mesh + Cooler DeepCool AK400", search: "Montech X3 Mesh", coolerSearch: "DeepCool AK400", maxTdp: 200, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 50, silence: 40, price: 509.8, note: "Frontal mesh com 6 fans inclusos e cooler tower silencioso." },
+  { id: "kit-mid", name: "Gabinete Corsair 4000D Airflow + Cooler Thermalright Peerless Assassin 120 SE", search: "Corsair 4000D Airflow", coolerSearch: "Thermalright Peerless Assassin 120 SE", maxTdp: 245, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 72, silence: 58, price: 889.8, note: "Frente mesh de alta vazão e cooler dual tower que rivaliza com water coolers." },
+  { id: "kit-aio", name: "Gabinete Corsair 4000D Airflow + Water Cooler Corsair Nautilus 360 RS", search: "Corsair 4000D Airflow", coolerSearch: "Corsair Nautilus 360 RS", maxTdp: 300, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 95, silence: 72, price: 1389.8, note: "Water cooler de 360mm para CPUs de alto consumo, num gabinete de ótima ventilação." },
+  { id: "kit-silent", estimated: true, name: "Gabinete Fractal Design North + Cooler Noctua NH-D15 G2", search: "Fractal Design North", coolerSearch: "Noctua NH-D15 G2", maxTdp: 260, formFactors: ["mATX", "ATX"], usesBoxCooler: false, cooling: 88, silence: 100, price: 2499.8, note: "Combinação referência em silêncio: frontal em madeira/mesh e um dos coolers a ar mais silenciosos do mercado." },
 ];
 
 export const SECTORS: Record<Sector, { title: string; softwares: string[] }> = {
@@ -330,10 +340,66 @@ export const SECTORS: Record<Sector, { title: string; softwares: string[] }> = {
 };
 
 export const MONITORS: MonitorOption[] = [
-  { id: "mon-100hz", name: "Monitor AOC 24\" 100Hz IPS", search: "Monitor 24 polegadas 100hz IPS", price: 650, note: "Monitor básico fluido para escritório e estudo.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 24 },
-  { id: "mon-180hz", name: "Monitor Gamer AOC 24\" 180Hz", search: "Monitor 24 polegadas 180hz", price: 850, note: "Ideal para e-Sports e jogos competitivos.", resolution: "1920x1080", panel: "VA/IPS", refreshRate: 180, size: 24 },
-  { id: "mon-qhd", name: "Monitor LG UltraGear 27\" QHD 180Hz", search: "Monitor LG UltraGear 27 QHD", price: 1899, note: "Resolução QHD para mais nitidez em jogos e produtividade.", resolution: "2560x1440", panel: "IPS", refreshRate: 180, size: 27 },
-  { id: "mon-4k", name: "Monitor LG 27\" 4K IPS", search: "Monitor LG 27 4K IPS", price: 2200, note: "Alta fidelidade de cores para design e arquitetura.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+  { id: "mon-aoc-22", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor AOC 21.5\" 22B1HM5 75Hz VA", search: "AOC 22B1HM5", price: 449.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "VA", refreshRate: 75, size: 21.5 },
+  { id: "mon-lg-22", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor LG 21.5\" 22MP410-B 75Hz VA", search: "LG 22MP410-B", price: 479.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "VA", refreshRate: 75, size: 21.5 },
+  { id: "mon-100hz", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor AOC 23.8\" 24B30HM2 100Hz VA", search: "AOC 24B30HM2", price: 559.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "VA", refreshRate: 100, size: 23.8 },
+  { id: "mon-22", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor Samsung T350 24\" 75Hz IPS", search: "Samsung LF24T350FHLMZD", price: 569.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 75, size: 24 },
+  { id: "mon-lg-24ms500", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor LG 23.8\" 24MS500-B 100Hz IPS", search: "LG 24MS500-B", price: 599.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 23.8 },
+  { id: "mon-acer-ek241y", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor Acer 23.8\" EK241Y 100Hz IPS", search: "Acer EK241Y", price: 619.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 23.8 },
+  { id: "mon-asus-vy249hf", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor Asus Eye Care 23.8\" VY249HF 100Hz IPS", search: "Asus VY249HF", price: 649.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 23.8 },
+  { id: "mon-samsung-s3-27", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor Samsung S3 27\" LS27D300GA 100Hz IPS", search: "Samsung LS27D300GA", price: 749.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 27 },
+  { id: "mon-dell-p2425h", group: "Home office e estudos (Full HD 75–100Hz)", name: "Monitor Dell 24\" P2425H Profissional 100Hz IPS", search: "Dell P2425H", price: 1119.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Fluido para estudo e trabalho.", resolution: "1920x1080", panel: "IPS", refreshRate: 100, size: 24 },
+  { id: "mon-pichau-athen", group: "Gamer Full HD (144–180Hz)", name: "Monitor Pichau Athen V2L 24\" 165Hz IPS", search: "Pichau Athen V2L 24", price: 689.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "IPS", refreshRate: 165, size: 24 },
+  { id: "mon-superframe-24", group: "Gamer Full HD (144–180Hz)", name: "Monitor SuperFrame Precision 24\" 180Hz Fast VA", search: "SuperFrame Precision 24", price: 719.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "Fast VA", refreshRate: 180, size: 24 },
+  { id: "mon-acer-qg240y", group: "Gamer Full HD (144–180Hz)", name: "Monitor Acer Nitro 23.8\" QG240Y 180Hz VA", search: "Acer Nitro QG240Y", price: 769.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "VA", refreshRate: 180, size: 23.8 },
+  { id: "mon-odyssey-g30", group: "Gamer Full HD (144–180Hz)", name: "Monitor Samsung Odyssey G30 24\" 144Hz VA", search: "Samsung Odyssey G30 LS24BG300", price: 799.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "VA", refreshRate: 144, size: 24 },
+  { id: "mon-180hz", group: "Gamer Full HD (144–180Hz)", name: "Monitor LG UltraGear 24\" 24GS60F-B 180Hz IPS", search: "LG UltraGear 24GS60F", price: 849.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "IPS", refreshRate: 180, size: 24 },
+  { id: "mon-aoc-24g4", group: "Gamer Full HD (144–180Hz)", name: "Monitor AOC Hero 24\" 24G4/P 180Hz Fast IPS", search: "AOC Hero 24G4", price: 869.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "Fast IPS", refreshRate: 180, size: 24 },
+  { id: "mon-gigabyte-g24f2", group: "Gamer Full HD (144–180Hz)", name: "Monitor Gigabyte 23.8\" G24F 2 180Hz IPS", search: "Gigabyte G24F 2", price: 919.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "SS IPS", refreshRate: 180, size: 23.8 },
+  { id: "mon-asus-vg249q3a", group: "Gamer Full HD (144–180Hz)", name: "Monitor Asus TUF Gaming 23.8\" VG249Q3A 180Hz Fast IPS", search: "Asus TUF VG249Q3A", price: 929.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "Fast IPS", refreshRate: 180, size: 23.8 },
+  { id: "mon-27fhd", group: "Gamer Full HD (144–180Hz)", name: "Monitor AOC Hero 27\" 27G4/P 180Hz Fast IPS", search: "AOC Hero 27G4", price: 999.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "Fast IPS", refreshRate: 180, size: 27 },
+  { id: "mon-lg-27gs60f", group: "Gamer Full HD (144–180Hz)", name: "Monitor LG UltraGear 27\" 27GS60F-B 180Hz IPS", search: "LG UltraGear 27GS60F", price: 1059.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Taxa alta para jogos em Full HD.", resolution: "1920x1080", panel: "IPS", refreshRate: 180, size: 27 },
+  { id: "mon-aoc-25g3zm", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor AOC Destiny 24.5\" 25G3ZM 240Hz VA", search: "AOC 25G3ZM", price: 1169.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "VA", refreshRate: 240, size: 24.5 },
+  { id: "mon-aoc-c27g2ze", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor AOC Legend 27\" C27G2ZE Curvo 240Hz VA", search: "AOC C27G2ZE", price: 1269.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "VA Curvo", refreshRate: 240, size: 27 },
+  { id: "mon-odyssey-g40", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor Samsung Odyssey G40 25\" 240Hz IPS", search: "Samsung Odyssey G40 LS25BG400", price: 1369.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "IPS", refreshRate: 240, size: 25 },
+  { id: "mon-lg-27gp750", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor LG UltraGear 27\" 27GP750-B 240Hz IPS", search: "LG UltraGear 27GP750", price: 1589.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "IPS", refreshRate: 240, size: 27 },
+  { id: "mon-asus-vg279qm", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor Asus TUF Gaming 27\" VG279QM 280Hz Fast IPS", search: "Asus TUF VG279QM", price: 1749.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "Fast IPS", refreshRate: 280, size: 27 },
+  { id: "mon-aw2523hf", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor Alienware 24.5\" AW2523HF 360Hz Fast IPS", search: "Alienware AW2523HF", price: 2549.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "Fast IPS", refreshRate: 360, size: 24.5 },
+  { id: "mon-zowie-xl2546x", group: "Gamer competitivo Full HD (240–360Hz)", name: "Monitor BenQ ZOWIE 24.5\" XL2546X 240Hz TN (DyAc 2)", search: "BenQ ZOWIE XL2546X", price: 3699.9, note: "Painel TN focado em nitidez de movimento para competitivo profissional. Feito para e-sports com FPS muito alto.", resolution: "1920x1080", panel: "Fast TN", refreshRate: 240, size: 24.5 },
+  { id: "mon-pichau-centauri", group: "Quad HD 1440p", name: "Monitor Pichau Centauri Pulse 27\" PRO QHD 165Hz IPS", search: "Pichau Centauri Pulse 27 PRO", price: 1269.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "IPS", refreshRate: 165, size: 27 },
+  { id: "mon-aoc-q27g2", group: "Quad HD 1440p", name: "Monitor AOC Hero Quad 27\" Q27G2 QHD 155Hz VA", search: "AOC Q27G2", price: 1319.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "VA", refreshRate: 155, size: 27 },
+  { id: "mon-odyssey-g5-27", group: "Quad HD 1440p", name: "Monitor Samsung Odyssey G5 27\" Curvo QHD 165Hz VA", search: "Samsung Odyssey G5 LS27CG552", price: 1369.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "VA Curvo", refreshRate: 165, size: 27 },
+  { id: "mon-qhd-office", group: "Quad HD 1440p", name: "Monitor Gigabyte 27\" GS27QA QHD 180Hz IPS", search: "Gigabyte GS27QA", price: 1589.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "SS IPS", refreshRate: 180, size: 27 },
+  { id: "mon-lg-27gr75q", group: "Quad HD 1440p", name: "Monitor LG UltraGear 27\" 27GR75Q-B QHD 165Hz IPS", search: "LG UltraGear 27GR75Q", price: 1729.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "IPS", refreshRate: 165, size: 27 },
+  { id: "mon-qhd", group: "Quad HD 1440p", name: "Monitor Asus TUF Gaming 27\" VG27AQL3A QHD 180Hz Fast IPS", search: "Asus TUF VG27AQL3A", price: 1799.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "Fast IPS", refreshRate: 180, size: 27 },
+  { id: "mon-gigabyte-m27q", group: "Quad HD 1440p", name: "Monitor Gigabyte 27\" M27Q V2 QHD 170Hz IPS (KVM, USB-C)", search: "Gigabyte M27Q V2", price: 2069.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "SS IPS", refreshRate: 170, size: 27 },
+  { id: "mon-aw2724dm", group: "Quad HD 1440p", name: "Monitor Alienware 27\" AW2724DM QHD 180Hz Fast IPS", search: "Alienware AW2724DM", price: 2749.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. QHD: mais nitidez e espaço de tela que o Full HD.", resolution: "2560x1440", panel: "Fast IPS", refreshRate: 180, size: 27 },
+  { id: "mon-lg-26wq500", group: "Ultrawide 21:9", name: "Monitor LG UltraWide 25.7\" 26WQ500-B 75Hz IPS", search: "LG 26WQ500", price: 799.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Ultrawide 21:9 substitui dois monitores.", resolution: "2560x1080", panel: "IPS", refreshRate: 75, size: 25.7 },
+  { id: "mon-lg-29wq500", group: "Ultrawide 21:9", name: "Monitor LG UltraWide 29\" 29WQ500-B 100Hz IPS", search: "LG 29WQ500", price: 1059.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Ultrawide 21:9 substitui dois monitores.", resolution: "2560x1080", panel: "IPS", refreshRate: 100, size: 29 },
+  { id: "mon-lg-29wq600", group: "Ultrawide 21:9", name: "Monitor LG UltraWide 29\" 29WQ600 100Hz IPS (USB-C)", search: "LG 29WQ600", price: 1169.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Ultrawide 21:9 substitui dois monitores.", resolution: "2560x1080", panel: "IPS", refreshRate: 100, size: 29 },
+  { id: "mon-pichau-nexus", group: "Ultrawide 21:9", name: "Monitor Pichau Nexus Wide 30\" Curvo 200Hz VA", search: "Pichau Nexus Wide 30", price: 1369.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Ultrawide 21:9 substitui dois monitores.", resolution: "2560x1080", panel: "VA Curvo", refreshRate: 200, size: 30 },
+  { id: "mon-ultrawide", group: "Ultrawide 21:9", name: "Monitor LG UltraGear 34\" 34GP63A-B Curvo WQHD 160Hz VA", search: "LG UltraGear 34GP63A", price: 2349.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Ultrawide 21:9 substitui dois monitores.", resolution: "3440x1440", panel: "VA Curvo", refreshRate: 160, size: 34 },
+  { id: "mon-odyssey-g5-34", group: "Ultrawide 21:9", name: "Monitor Samsung Odyssey G5 34\" Curvo WQHD 165Hz VA", search: "Samsung Odyssey G5 LC34G55T", price: 2449.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Ultrawide 21:9 substitui dois monitores.", resolution: "3440x1440", panel: "VA Curvo", refreshRate: 165, size: 34 },
+  { id: "mon-asus-vg34vql3a", group: "Ultrawide 21:9", name: "Monitor Asus TUF Gaming 34\" VG34VQL3A Curvo WQHD 180Hz VA", search: "Asus TUF VG34VQL3A", price: 2749.9, note: "Alto contraste e pretos profundos: ótimo para jogos de campanha, filmes e escritório. Ultrawide 21:9 substitui dois monitores.", resolution: "3440x1440", panel: "VA Curvo", refreshRate: 180, size: 34 },
+  { id: "mon-samsung-s7", group: "4K UHD e OLED", name: "Monitor Samsung ViewFinity S7 27\" 4K 60Hz IPS", search: "Samsung ViewFinity S7 LS27D700", price: 1599.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+  { id: "mon-4k", group: "4K UHD e OLED", name: "Monitor LG 27\" 27UP650P-W 4K 60Hz IPS", search: "LG 27UP650P", price: 1789.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+  { id: "mon-lg-dualup", group: "4K UHD e OLED", name: "Monitor LG DualUp 28\" 28MQ780-B 16:18 Nano IPS", search: "LG DualUp 28MQ780", price: 3399.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "2560x2880", panel: "Nano IPS", refreshRate: 60, size: 28 },
+  { id: "mon-4k144", group: "4K UHD e OLED", name: "Monitor Gigabyte 28\" M28U 4K 144Hz IPS", search: "Gigabyte M28U", price: 3399.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "SS IPS", refreshRate: 144, size: 28 },
+  { id: "mon-proart-pa279crv", group: "4K UHD e OLED", name: "Monitor Asus ProArt 27\" PA279CRV 4K 60Hz IPS Profissional", search: "Asus ProArt PA279CRV", price: 3599.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+  { id: "mon-benq-pd2705u", group: "4K UHD e OLED", name: "Monitor BenQ PD2705U Designer 27\" 4K 60Hz IPS", search: "BenQ PD2705U", price: 3949.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "IPS", refreshRate: 60, size: 27 },
+  { id: "mon-dell-u2723qe", group: "4K UHD e OLED", name: "Monitor Dell UltraSharp 27\" U2723QE 4K 60Hz IPS Black", search: "Dell UltraSharp U2723QE", price: 4149.9, note: "Cores fiéis e bom ângulo de visão: indicado para arquitetura, design e programação. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "IPS Black", refreshRate: 60, size: 27 },
+  { id: "mon-lg-27gs95qe", group: "4K UHD e OLED", name: "Monitor LG UltraGear OLED 27\" 27GS95QE QHD 240Hz", search: "LG UltraGear 27GS95QE", price: 5199.9, note: "Contraste infinito e resposta instantânea: topo para jogos e HDR. Resolução alta para CAD, fotografia e criação.", resolution: "2560x1440", panel: "OLED", refreshRate: 240, size: 27 },
+  { id: "mon-oled", group: "4K UHD e OLED", name: "Monitor Samsung Odyssey OLED G6 27\" QHD 360Hz", search: "Samsung Odyssey OLED G6 LS27DG600", price: 5599.9, note: "Contraste infinito e resposta instantânea: topo para jogos e HDR. Resolução alta para CAD, fotografia e criação.", resolution: "2560x1440", panel: "QD-OLED", refreshRate: 360, size: 27 },
+  { id: "mon-aw3423dwf", group: "4K UHD e OLED", name: "Monitor Alienware 34\" AW3423DWF Curvo QD-OLED WQHD 165Hz", search: "Alienware AW3423DWF", price: 6349.9, note: "Contraste infinito e resposta instantânea: topo para jogos e HDR. Resolução alta para CAD, fotografia e criação.", resolution: "3440x1440", panel: "QD-OLED", refreshRate: 165, size: 34 },
+  { id: "mon-aw3225qf", group: "4K UHD e OLED", name: "Monitor Alienware 32\" AW3225QF 4K QD-OLED 240Hz", search: "Alienware AW3225QF", price: 7899.9, note: "Contraste infinito e resposta instantânea: topo para jogos e HDR. Resolução alta para CAD, fotografia e criação.", resolution: "3840x2160", panel: "QD-OLED", refreshRate: 240, size: 32 },
+];
+
+/** Guia de tipos de painel (pesquisa de 03/11/2026), usado nas recomendações da IA. */
+export const PANEL_GUIDE: { panel: string; traits: string; idealFor: string }[] = [
+  { panel: "IPS / Fast IPS", traits: "Fidelidade de cores superior (sRGB 99%+), ângulo de visão de 178° e resposta rápida (0,5–1ms nos Fast IPS).", idealFor: "Arquitetura, design, programação e jogos competitivos" },
+  { panel: "VA / VA Curvo", traits: "Alto contraste (3000:1) e pretos profundos em ambientes escuros; comum em telas curvas (1000R/1500R).", idealFor: "Jogos de campanha, simuladores, filmes e escritório" },
+  { panel: "TN (e-Sports)", traits: "Foco total em velocidade de pixels e nitidez de movimento (DyAc), com cores e ângulos mais simples.", idealFor: "Competitivo profissional (CS2, Valorant, Rainbow Six)" },
+  { panel: "OLED / QD-OLED", traits: "Pixels autoiluminados, contraste infinito, preto absoluto e resposta instantânea (0,03ms).", idealFor: "Entusiastas high-end, 4K/QHD ultra e color grading" },
 ];
 
 

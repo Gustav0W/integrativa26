@@ -1,8 +1,8 @@
 import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import { generateText, Output, type ModelMessage } from "ai";
 import { z } from "zod";
-import { CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS } from "../catalog";
-import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, SECTOR_LABEL, brl, normalizeInput, type BuildEvaluation } from "../engine";
+import { CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PANEL_GUIDE, PSUS, RAMS, SECTORS, SSDS } from "../catalog";
+import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, SECTOR_LABEL, brl, catalogDateLabel, normalizeInput, type BuildEvaluation } from "../engine";
 import type { BuildInput, BuildResult, PromptSignals } from "../types";
 
 /* ============================================================================
@@ -91,7 +91,7 @@ const requestSchema = z.object({
 
 /** Catálogo resumido (nomes e preços de referência) para a IA citar modelos reais. */
 function catalogSummary() {
-  const groups: [string, { name: string; price: number }[]][] = [
+  const groups: [string, { name: string; price: number; estimated?: boolean }[]][] = [
     ["Processadores", CPUS],
     ["Placas de vídeo", GPUS],
     ["Placas-mãe", MOBOS],
@@ -99,8 +99,9 @@ function catalogSummary() {
     ["SSDs", SSDS],
     ["Fontes", PSUS],
     ["Gabinete + cooler", CASE_KITS],
+    ["Monitores", MONITORS.map((m) => ({ ...m, name: `${m.name} (painel ${m.panel}, ${m.resolution})` }))],
   ];
-  return groups.map(([title, items]) => `${title}: ${items.map((item) => `${item.name} (${brl(item.price)})`).join("; ")}`).join("\n");
+  return groups.map(([title, items]) => `${title}: ${items.map((item) => `${item.name} (${brl(item.price)}${item.estimated ? ", estimado" : ""})`).join("; ")}`).join("\n");
 }
 
 const conversationSchema = z.object({
@@ -144,10 +145,13 @@ export async function converse(
 Só monte um PC completo (intent = build) se a pessoa pedir isso ou pedir para ajustar a build atual.
 Perguntas sobre uma peça, preço, onde comprar ou "qual o melhor X" são intent = answer: responda só o que foi perguntado.
 
-Sobre preços: você NÃO tem preços ao vivo. Os valores do catálogo abaixo são estimativas de referência e podem estar desatualizados — deixe isso claro ao citar valores e indique pesquisar nos links (Google Shopping, KaBuM!, Pichau, Terabyte).
+Sobre preços: você NÃO tem preços ao vivo. Os valores do catálogo abaixo vêm de uma pesquisa feita em ${catalogDateLabel()} na KaBuM!, Pichau e Terabyte (preço médio à vista); os marcados "estimado" não estavam na pesquisa. Ao citar valores, diga que são de referência dessa data e indique conferir nos links.
 
 Catálogo de referência:
 ${catalogSummary()}
+
+Guia de tipos de painel de monitor (use ao recomendar monitores):
+${PANEL_GUIDE.map((p) => `- ${p.panel}: ${p.traits} Ideal para: ${p.idealFor}.`).join("\n")}
 
 ${context}
 ${currentBuild.length ? `\nBuild atual mostrada ao usuário:\n${currentBuild.join("\n")}\n` : ""}${conversation ? `\nConversa até agora:\n${conversation}\n` : ""}

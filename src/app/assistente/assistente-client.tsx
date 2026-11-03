@@ -6,7 +6,7 @@ import { BuildResultView, LOADING_STEPS, LoadingState } from "@/components/build
 import { BudgetField, PageIntro, Panel, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { MONITORS } from "@/lib/catalog";
-import { normalizeInput, sameInput } from "@/lib/engine";
+import { brl, normalizeInput, sameInput } from "@/lib/engine";
 import { useSessionState } from "@/lib/session-state";
 import type { BrandPreference, BuildInput, BuildResult } from "@/lib/types";
 
@@ -102,7 +102,15 @@ export function AssistenteClient() {
               <label htmlFor="assistant-monitor" className="label-mono block text-subtle">Monitor opcional</label>
               <select id="assistant-monitor" value={normalizedForm.monitorId ?? ""} onChange={(event) => update("monitorId", event.target.value || null)} className={`${inputClass} cursor-pointer`}>
                 <option value="">Não incluir monitor</option>
-                {MONITORS.map((monitor) => <option key={monitor.id} value={monitor.id}>{monitor.name} · R$ {monitor.price.toLocaleString("pt-BR")}</option>)}
+                {[...new Set(MONITORS.map((monitor) => monitor.group))].map((group) => (
+                  <optgroup key={group} label={group}>
+                    {MONITORS.filter((monitor) => monitor.group === group).map((monitor) => (
+                      <option key={monitor.id} value={monitor.id}>
+                        {monitor.name} · {brl(monitor.price)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
               <ToggleRow icon={Volume2} label="Foco em silêncio e refrigeração" description="Prioriza coolers silenciosos e boa ventilação" checked={normalizedForm.silent} onChange={(value) => update("silent", value)} />
             </div>

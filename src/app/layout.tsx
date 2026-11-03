@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { InlineScript } from "@/components/inline-script";
 import { SiteHeader } from "@/components/site-header";
+import { catalogDateLabel } from "@/lib/engine";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import "./globals.css";
 
@@ -52,7 +53,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <footer className="border-t border-line bg-canvas">
           <div className="label-mono mx-auto flex max-w-7xl flex-col gap-1 px-4 py-5 text-subtle sm:flex-row sm:justify-between sm:px-6">
             <span>SmartBuild/AI — Projeto Integrativa</span>
-            <span>Preços estimados de referência · Rev. 2026</span>
+            <span>Preços de referência de {catalogDateLabel()} · KaBuM!, Pichau e Terabyte</span>
           </div>
         </footer>
       </body>

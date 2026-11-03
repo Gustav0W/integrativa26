@@ -8,8 +8,8 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 
 ## Alta prioridade
 
-- [ ] **1. Atualizar os preços do catálogo** — `src/lib/catalog.ts`
-  Os preços atuais são **estimativas sem pesquisa real** e provavelmente estão defasados (memória e SSD subiram bastante). Para cada item: pesquisar o preço atual na KaBuM!, Pichau e Terabyte, confirmar que o modelo é vendido no Brasil e atualizar o campo `price`. Sugestão: criar uma constante `CATALOG_UPDATED_AT` e mostrar “preços de dd/mm/aaaa” na interface.
+- [x] **1. Atualizar os preços do catálogo** — `src/lib/catalog.ts`
+  Feito em 03/11/2026 com o preço médio à vista (PIX) da KaBuM!, Pichau e Terabyte. Modelos que não estavam na pesquisa foram trocados por equivalentes pesquisados ou têm `estimated: true` (aparece “estimado” na tela). A data fica em `CATALOG_UPDATED_AT` e é mostrada no rodapé e nas dicas. **Próxima atualização:** refazer a pesquisa, trocar os preços, remover `estimated` dos itens pesquisados e atualizar a data.
 
 - [ ] **2. Calibrar as notas de desempenho das peças** — `src/lib/catalog.ts`
   Os campos `gaming`, `multi`, `render` e `score` (0–100) são estimativas relativas, não benchmarks. Eles definem a escolha das peças e o FPS estimado. Calibrar com fontes como a tabela de desempenho relativo do TechPowerUp ou a hierarquia de GPUs do Tom's Hardware.

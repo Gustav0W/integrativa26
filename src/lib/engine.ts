@@ -1,4 +1,4 @@
-import { BUDGET_MAX, BUDGET_MIN, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS, googleShoppingUrl } from "./catalog";
+import { BUDGET_MAX, BUDGET_MIN, CATALOG_UPDATED_AT, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS, googleShoppingUrl } from "./catalog";
 import type {
   BuildInput,
   BuildResult,
@@ -182,6 +182,12 @@ const HEAVY_STORAGE: Sector[] = ["gaming", "engenharia", "design", "marketing"];
 
 const brlFormatter = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 export const brl = (value: number) => brlFormatter.format(value);
+
+/** Data da pesquisa de preços no formato dd/mm/aaaa. */
+export function catalogDateLabel() {
+  const [year, month, day] = CATALOG_UPDATED_AT.split("-");
+  return `${day}/${month}/${year}`;
+}
 
 export function clampBudget(value: number) {
   const safe = Number.isFinite(value) ? value : BUDGET_MIN;
@@ -562,7 +568,7 @@ function describeParts(combo: Combo, input: BuildInput, profile: Profile, analys
       name: ssd.name,
       price: ssd.price,
       reason: `${ssd.note} ${ssdReason}`,
-      specs: [capacityLabel(ssd.capacity), "NVMe M.2", "PCIe 4.0"],
+      specs: ssd.kind === "sata" ? [capacityLabel(ssd.capacity), "SATA 2,5\"", "até 500 MB/s"] : [capacityLabel(ssd.capacity), "NVMe M.2", "PCIe 4.0"],
       searchTerms: [ssd.search],
     },
     {
@@ -593,7 +599,10 @@ function describeParts(combo: Combo, input: BuildInput, profile: Profile, analys
       searchTerms: [monitor.search],
     });
   }
-  return parts;
+
+  // Marca as peças cujo preço é estimado (fora da última pesquisa de preços).
+  const items: Partial<Record<RecommendedPart["category"], { estimated?: boolean }>> = { cpu, gpu, mobo, ram, ssd, psu, case: kit, extra: monitor ?? undefined };
+  return parts.map((part) => (items[part.category]?.estimated ? { ...part, estimated: true } : part));
 }
 
 const PLATFORM_NOTE: Record<Socket, string> = {
@@ -1033,7 +1042,7 @@ export function buildSummaryText(result: BuildResult) {
     "OBSERVAÇÕES DA IA",
     ...result.insights.map((insight) => `- ${insight.text}`),
     "",
-    "Preços estimados de referência (mercado brasileiro). Confira os links para o menor preço do dia.",
+    `Preços de referência pesquisados em ${catalogDateLabel()} (KaBuM!, Pichau e Terabyte, à vista); itens marcados como estimados não estavam na pesquisa. Confira os links para o menor preço do dia.`,
   ];
   return lines.join("\n");
 }

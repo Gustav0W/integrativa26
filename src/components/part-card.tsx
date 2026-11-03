@@ -50,7 +50,14 @@ export function PartCard({ part, index }: { part: RecommendedPart; index: number
           {ui.code} · {String(index + 1).padStart(2, "0")}
           <span className="hidden text-subtle/70 sm:inline">— {CATEGORY_LABEL[part.category].split(" (")[0]}</span>
         </span>
-        <span className="font-mono text-sm font-semibold">{part.price > 0 ? brl(part.price) : "Incluso"}</span>
+        <span className="flex items-baseline gap-1.5 font-mono text-sm font-semibold">
+          {part.estimated && (
+            <span className="label-mono font-normal text-copper" title="Esta peça não estava na última pesquisa de preços; o valor foi estimado.">
+              estimado
+            </span>
+          )}
+          {part.price > 0 ? brl(part.price) : "Incluso"}
+        </span>
       </header>
 
       <div className="flex flex-1 flex-col p-4">
