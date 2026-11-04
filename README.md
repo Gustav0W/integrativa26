@@ -11,6 +11,8 @@ Sistema web que ajuda pessoas leigas ou entusiastas a montar o computador ideal 
 | **Montar** (`/montar`) | Quem já viu peças que gostou | Escolhe peça por peça; a IA avalia compatibilidade e uso em tempo real |
 | **Analisar PDF** (`/analisar`) | Quem recebeu um orçamento | Lê o PDF (ou texto) de um orçamento/anúncio e diz se vale a pena |
 
+**Compra pública (SC):** opção do Assistente para órgãos públicos de Santa Catarina. Com a quantidade de PCs e o gasto do ano, confere o limite de dispensa da Lei 14.133/2021, descreve as peças sem marca, aponta os documentos do processo e gera um rascunho de termo de referência. É uma conferência de apoio, não um parecer jurídico.
+
 ## Como rodar no seu computador
 
 Requisitos: Node.js 20+ e npm.
@@ -50,6 +52,7 @@ src/
     catalog.ts            catálogo de peças e PREÇOS DE REFERÊNCIA
     engine.ts             motor de recomendação e avaliação de builds
     nlp.ts                leitura de texto por palavras-chave (modo offline)
+    public-purchase.ts    regras do modo Compra pública (limite de dispensa e rascunho)
     api.ts                chamadas do navegador para a API (com fallback offline)
     server/gemini.ts      integração com o Gemini (só roda no servidor)
   app/globals.css         cores do tema (claro: verde/cobre; escuro: roxo/âmbar)

@@ -1,17 +1,18 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowRight, Monitor, RotateCcw, Volume2 } from "lucide-react";
+import { ArrowRight, Landmark, Monitor, RotateCcw, Volume2 } from "lucide-react";
 import { BuildResultView, LOADING_STEPS, LoadingState } from "@/components/build-result";
 import { BudgetField, PageIntro, Panel, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { MONITORS } from "@/lib/catalog";
 import { brl, normalizeInput, sameInput } from "@/lib/engine";
+import { DEFAULT_PUBLIC_PURCHASE, PUBLIC_RULES, sanitizePurchase } from "@/lib/public-purchase";
 import { useSessionState } from "@/lib/session-state";
-import type { BrandPreference, BuildInput, BuildResult } from "@/lib/types";
+import type { BrandPreference, BuildInput, BuildResult, PublicPurchase } from "@/lib/types";
 
 /** Cenários prontos que preenchem o formulário e geram a build na hora (offline). */
-const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput }[] = [
+const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput; publicPurchase?: PublicPurchase }[] = [
   {
     id: "gamer-1080p",
     title: "Gamer Entrada",
@@ -36,6 +37,13 @@ const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput 
     subtitle: "Com monitor · R$ 3.500",
     input: { budget: 3500, sector: "escritorio", softwares: ["Excel Avançado", "Browser (Muitas abas)"], resolution: "1080p", brand: "any", monitorId: "mon-100hz", silent: false, prompt: "PC para faculdade, aulas online, Office e muitas abas no navegador." },
   },
+  {
+    id: "compra-publica",
+    title: "Compra pública (SC)",
+    subtitle: "20 PCs de escritório · R$ 4.000 cada",
+    input: { budget: 4000, sector: "escritorio", softwares: ["Excel Avançado", "Browser (Muitas abas)"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "Computadores para os servidores de um setor administrativo do Estado." },
+    publicPurchase: { enabled: true, quantity: 20, spentThisYear: 0 },
+  },
 ];
 
 const DEFAULT_FORM: BuildInput = { budget: 8000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1440p", brand: "any", monitorId: null, silent: false, prompt: "" };
@@ -43,11 +51,14 @@ const DEFAULT_FORM: BuildInput = { budget: 8000, sector: "gaming", softwares: ["
 export function AssistenteClient() {
   const [form, setForm] = useSessionState<BuildInput>("assistente:form", DEFAULT_FORM);
   const [result, setResult] = useSessionState<BuildResult | null>("assistente:result", null);
+  const [publicPurchase, setPublicPurchase] = useSessionState<PublicPurchase>("assistente:compra-publica", DEFAULT_PUBLIC_PURCHASE);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const normalizedForm = normalizeInput(form);
+  const purchase = sanitizePurchase(publicPurchase);
+  const updatePurchase = (changes: Partial<PublicPurchase>) => setPublicPurchase((prev) => ({ ...prev, ...changes }));
   const update = <K extends keyof BuildInput>(key: K, value: BuildInput[K]) => setForm((prev) => ({ ...prev, [key]: value }));
   const isStale = result !== null && !loading && !sameInput(result.input, normalizedForm);
 
@@ -126,6 +137,25 @@ export function AssistenteClient() {
             />
           </Panel>
 
+          <Panel index="05" title="Compra pública" aside={<span className="label-mono text-subtle">opcional</span>}>
+            <ToggleRow icon={Landmark} label="Compra de órgão público (SC)" description="Confere a Lei 14.133 e as regras de Santa Catarina" checked={purchase.enabled} onChange={(value) => updatePurchase({ enabled: value })} />
+            {purchase.enabled && (
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="public-quantity" className="label-mono mb-1.5 block text-subtle">Quantidade de PCs</label>
+                    <input id="public-quantity" type="number" min={1} max={PUBLIC_RULES.maxQuantity} value={publicPurchase.quantity || ""} placeholder="1" onChange={(event) => updatePurchase({ quantity: Number(event.target.value) })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label htmlFor="public-spent" className="label-mono mb-1.5 block text-subtle">Já gasto no ano (R$)</label>
+                    <input id="public-spent" type="number" min={0} step={100} value={publicPurchase.spentThisYear || ""} placeholder="0" onChange={(event) => updatePurchase({ spentThisYear: Number(event.target.value) })} className={inputClass} />
+                  </div>
+                </div>
+                <p className="text-xs text-subtle">O orçamento do passo 01 vale por PC. Em “já gasto”, some o que a unidade comprou neste ano no mesmo ramo de atividade.</p>
+              </div>
+            )}
+          </Panel>
+
           <button type="button" onClick={() => void generate()} disabled={loading} className={`${primaryButton} w-full py-4`}>
             {loading ? "Gerando…" : "Gerar build ideal com IA"}
             <ArrowRight className="size-4" />
@@ -147,7 +177,7 @@ export function AssistenteClient() {
                   </button>
                 </div>
               )}
-              <BuildResultView result={result} onRegenerate={() => void generate()} />
+              <BuildResultView result={result} onRegenerate={() => void generate()} publicPurchase={purchase} />
             </>
           ) : (
             <div className="border border-dashed border-ink/40 px-6 py-12">
@@ -161,6 +191,7 @@ export function AssistenteClient() {
                       type="button"
                       onClick={() => {
                         setForm(preset.input);
+                        setPublicPurchase(preset.publicPurchase ?? { ...purchase, enabled: false });
                         void generate(preset.input);
                       }}
                       className="group grid w-full grid-cols-[2rem_1fr_auto] items-baseline gap-3 border-b border-line px-1 py-3.5 text-left transition hover:bg-surface"

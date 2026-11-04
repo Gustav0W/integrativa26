@@ -1,13 +1,15 @@
 "use client";
 
 import { ViewTransition, startTransition, useRef, useState } from "react";
-import { Copy, Download, RotateCcw, X } from "lucide-react";
+import { Copy, Download, Landmark, RotateCcw, X } from "lucide-react";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, catalogDateLabel, scoreLabel, sectorLabel } from "@/lib/engine";
-import type { BuildResult } from "@/lib/types";
+import { evaluatePublicPurchase, publicDraftText, brlCents } from "@/lib/public-purchase";
+import type { BuildResult, PublicPurchase } from "@/lib/types";
 import { PartCard } from "./part-card";
-import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, secondaryButton } from "./ui";
+import { PublicPurchasePanel } from "./public-purchase-panel";
+import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, TONE_UI, secondaryButton } from "./ui";
 
-type Tab = "parts" | "health" | "tips";
+type Tab = "parts" | "health" | "tips" | "public";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "parts", label: "Peças" },
@@ -26,8 +28,11 @@ export function downloadText(filename: string, text: string) {
 }
 
 /** Resultado de uma recomendação: cabeçalho enxuto + detalhes em abas. */
-export function BuildResultView({ result, onRegenerate }: { result: BuildResult; onRegenerate?: () => void }) {
-  const [tab, setTabState] = useState<Tab>("parts");
+export function BuildResultView({ result, onRegenerate, publicPurchase }: { result: BuildResult; onRegenerate?: () => void; publicPurchase?: PublicPurchase }) {
+  const [selectedTab, setTabState] = useState<Tab>("parts");
+  const evaluation = publicPurchase?.enabled ? evaluatePublicPurchase(result, publicPurchase) : null;
+  const tab = selectedTab === "public" && !evaluation ? "parts" : selectedTab;
+  const tabs = evaluation ? [...TABS, { id: "public" as const, label: "Compra pública" }] : TABS;
   /** Dentro de startTransition para o React animar a troca de aba (crossfade). */
   const setTab = (next: Tab) => startTransition(() => setTabState(next));
   const [toast, setToast] = useState<string | null>(null);
@@ -49,6 +54,12 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
   const handleExport = () => {
     downloadText(`smartbuild-orcamento-${result.total}.txt`, buildSummaryText(result));
     showToast("Resumo do orçamento exportado (.txt)");
+  };
+
+  const handlePublicExport = () => {
+    if (!evaluation) return;
+    downloadText("smartbuild-rascunho-termo-de-referencia.txt", publicDraftText(result, evaluation));
+    showToast("Rascunho do termo de referência baixado (.txt)");
   };
 
   const handleCopy = async () => {
@@ -122,11 +133,22 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
             )}
           </button>
         </div>
+
+        {evaluation && (
+          <button type="button" onClick={() => setTab("public")} className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 border-t border-line p-4 text-left transition hover:bg-surface-2">
+            <Landmark className="size-4 shrink-0 text-subtle" strokeWidth={1.75} />
+            <span className="label-mono text-subtle">Compra pública · SC</span>
+            <span className={`font-mono text-sm font-semibold ${TONE_UI[evaluation.status === "dispensa" ? "success" : "warning"].text}`}>{evaluation.headline}</span>
+            <span className="font-mono text-xs text-muted sm:ml-auto">
+              {evaluation.quantity} PC(s) · {brlCents(evaluation.purchaseTotal)}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Abas sublinhadas */}
       <div className="flex gap-6 overflow-x-auto border-b border-line [scrollbar-width:none]" role="tablist">
-        {TABS.map(({ id, label }) => (
+        {tabs.map(({ id, label }) => (
           <button
             key={id}
             type="button"
@@ -210,6 +232,8 @@ export function BuildResultView({ result, onRegenerate }: { result: BuildResult;
               </section>
             </div>
           )}
+
+          {tab === "public" && evaluation && <PublicPurchasePanel evaluation={evaluation} onExport={handlePublicExport} />}
 
           {tab === "tips" && (
             <section className="border border-line bg-surface p-5">

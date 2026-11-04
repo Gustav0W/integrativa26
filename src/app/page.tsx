@@ -83,6 +83,13 @@ export default function Home() {
             </div>
           ))}
         </section>
+
+        <Link href="/assistente" transitionTypes={FORWARD} className="group mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border border-line bg-surface p-5 transition hover:border-ink/40">
+          <span className="label-mono text-copper">Opcional —</span>
+          <span className="text-sm font-semibold">Compra pública em Santa Catarina</span>
+          <span className="min-w-0 flex-1 basis-64 text-sm text-muted">Confere o limite de dispensa da Lei 14.133 e gera a especificação sem marca.</span>
+          <ArrowRight className="size-4 text-subtle transition group-hover:translate-x-1 group-hover:text-brand-text" />
+        </Link>
       </div>
     </PageTransition>
   );

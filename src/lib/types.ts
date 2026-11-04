@@ -24,6 +24,14 @@ export interface BuildInput {
   prompt: string;
 }
 
+/** Dados da compra feita por um órgão público (modo opcional do Assistente). */
+export interface PublicPurchase {
+  enabled: boolean;
+  /** Quantidade de computadores iguais a esta build. */
+  quantity: number;
+  /** Já gasto no ano pela unidade em compras do mesmo ramo (R$). */
+  spentThisYear: number;
+}
 
 export interface RecommendedPart {
   category: PartCategory;
