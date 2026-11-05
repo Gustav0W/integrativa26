@@ -47,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <InlineScript html={themeScript} />
       </head>
-      <body className="flex min-h-full flex-col text-fg">
+      <body className="flex min-h-full flex-col text-fg" suppressHydrationWarning>
         <SiteHeader />
         <main className="relative flex-1">{children}</main>
         <footer className="border-t border-line bg-canvas">
