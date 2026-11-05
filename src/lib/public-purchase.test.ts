@@ -64,6 +64,8 @@ describe("evaluatePublicPurchase", () => {
     const text = publicDraftText(result, evaluatePublicPurchase(result, purchase(3)));
     expect(text).toContain("Aquisição de 3 computador(es)");
     expect(text).toContain("não é parecer jurídico");
+    expect(text).toContain("Uso previsto");
+    expect(text).toContain("Dimensionamento do equipamento");
   });
 });
 

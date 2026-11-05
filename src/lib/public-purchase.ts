@@ -1,5 +1,6 @@
 import { CATALOG_UPDATED_AT } from "./catalog";
 import { catalogDateLabel, sectorLabel } from "./engine";
+import type { FitReport } from "./fit";
 import type { BuildResult, InsightTone, PartCategory, PublicPurchase, RecommendedPart } from "./types";
 
 /**
@@ -130,6 +131,15 @@ function limitCheck(status: PublicStatus, yearTotal: number, maxQuantity: number
   return { tone: "success", label, detail: `${sum} A compra pode seguir por dispensa de licitação.` };
 }
 
+function sizingCheck(fit: FitReport | undefined): PublicCheck | null {
+  if (!fit) return null;
+  const label = "Dimensionamento do equipamento";
+  const issues = fit.items.filter((item) => item.status !== "adequado");
+  if (issues.length === 0) return { tone: "success", label, detail: "Todas as peças estão dentro da referência para o uso, sem excesso nem falta. As faixas são critério do SmartBuild, não da lei." };
+  const list = issues.map((item) => `${item.label} em ${item.status}`).join(", ");
+  return { tone: "warning", label, detail: `${list}. Reveja antes de comprar, para não pagar a mais nem faltar desempenho. As faixas são critério do SmartBuild, não da lei.` };
+}
+
 function pricesExpired(now: Date) {
   const expiry = new Date(`${CATALOG_UPDATED_AT}T00:00:00`);
   expiry.setMonth(expiry.getMonth() + PUBLIC_RULES.priceMaxAgeMonths);
@@ -166,6 +176,7 @@ export function evaluatePublicPurchase(result: BuildResult, rawPurchase: PublicP
       ? { tone: "success", label: "Indicação de marca (art. 41)", detail: "A especificação descreve o que o PC precisa ter, sem citar marca ou modelo." }
       : { tone: "warning", label: "Indicação de marca (art. 41)", detail: `A build foi gerada com preferência por ${result.input.brand === "amd" ? "AMD" : "Intel"}. Indicar marca é exceção e precisa de justificativa formal. Se não houver motivo técnico, escolha "Indiferente".` },
     priceCheck(estimatedParts, pricesExpired(now)),
+    ...[sizingCheck(result.fit)].filter((check) => check !== null),
     direct
       ? { tone: "info", label: "Regra de Santa Catarina", detail: "Na administração estadual, a dispensa usa o Sistema de Dispensa Eletrônica; não usar é exceção, com justificativa (Decreto 30/2023, art. 12). O estudo técnico preliminar é opcional neste caso, com justificativa, e seus elementos mínimos vão para o termo de referência (Decreto 47/2023, arts. 8º e 9º)." }
       : { tone: "info", label: "Regra de Santa Catarina", detail: "Na administração estadual, a fase preparatória segue o Decreto 47/2023, e a licitação precisa de estudo técnico preliminar (art. 7º)." },
@@ -177,6 +188,7 @@ export function evaluatePublicPurchase(result: BuildResult, rawPurchase: PublicP
     { label: "Documento de formalização da demanda", drafted: false },
     { label: direct ? "Estudo técnico preliminar (opcional, com justificativa)" : "Estudo técnico preliminar (obrigatório)", drafted: false },
     { label: "Termo de referência", drafted: true },
+    { label: "Justificativa técnica", drafted: Boolean(result.fit) },
     { label: "Estimativa de despesa", drafted: true },
     { label: "Previsão de recursos orçamentários", drafted: false },
     { label: "Parecer jurídico e técnico, se for o caso", drafted: false },
@@ -204,9 +216,9 @@ export function publicDraftText(result: BuildResult, evaluation: PublicEvaluatio
     "1. OBJETO",
     `Aquisição de ${evaluation.quantity} computador(es) para uso em ${sectorLabel(input.sector)}.`,
     "",
-    "2. JUSTIFICATIVA DA NECESSIDADE",
-    "[Preencher: por que a unidade precisa destes computadores.]",
-    ...(input.softwares.length ? [`Softwares que serão usados: ${input.softwares.join(", ")}.`] : []),
+    "2. JUSTIFICATIVA TÉCNICA",
+    ...(result.fit?.justification ?? (input.softwares.length ? [`Softwares que serão usados: ${input.softwares.join(", ")}.`] : [])),
+    "[Completar: por que a unidade precisa destes computadores agora.]",
     "",
     "3. ESPECIFICAÇÃO MÍNIMA POR COMPUTADOR (sem indicação de marca)",
     ...evaluation.items.map((item, index) => `${index + 1}. ${item.spec}`),

@@ -63,6 +63,8 @@ Prioridades: **Alta** = resolver antes de apresentar/publicar · **Média** = me
 
 - [ ] **21. Manter o modo Compra pública em dia** — `src/lib/public-purchase.ts`
   O limite de dispensa muda todo ano: ao sair o decreto federal, atualizar `year` e `dispensaLimit` em `PUBLIC_RULES` (valor de 2026: R$ 65.492,11, Decreto 12.807/2025). Normas de SC usadas (conferidas no portal da ALESC e no LegisWeb em 03/11/2026): Decreto 30/2023 (alterado pelo 221/2023), Decreto 47/2023 e IN Conjunta SEA/CGE 3/2026, que revogou a IN SEA 9/2024. Revisar quando essas normas mudarem. A base de preços vale por 6 meses: depois disso a aba pede nova pesquisa. Hoje o modo existe só no Assistente, para o Estado de SC. Ideias: levar para Conversar e Montar, e considerar o limite em dobro de consórcios públicos e agências executivas (art. 75, §2º).
+- [ ] **22. Validar as faixas de adequação ao uso** — `src/lib/fit.ts`
+  As faixas de processador, memória, armazenamento e vídeo por setor são critério do projeto. Ajustar `NEEDS` com a opinião de quem usa esses programas no dia a dia. As peças Placa-mãe, Gabinete e Monitor ainda não são avaliadas.
 
 ## Problemas conhecidos
 

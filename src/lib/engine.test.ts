@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { budgetFromRange, budgetLabel, budgetRangeError, computeLocalBuild, normalizeInput, sanitizeInput } from "./engine";
-import { MONITORS } from "./catalog";
+import { budgetFromRange, budgetLabel, budgetRangeError, computeLocalBuild, evaluateBuild, normalizeInput, sanitizeInput } from "./engine";
+import { CPUS, GPUS, MONITORS, RAMS } from "./catalog";
 import type { BuildInput } from "./types";
 
 const base: BuildInput = { budget: 6000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "" };
@@ -106,5 +106,46 @@ describe("faixa de valor", () => {
 
   it("a API ignora mínimo maior que o máximo", () => {
     expect(sanitizeInput({ ...base, budget: 5000, budgetMin: 9000 }).budgetMin).toBeNull();
+  });
+});
+
+describe("adequação ao uso", () => {
+  const status = (result: ReturnType<typeof computeLocalBuild>, category: string) => result.fit?.items.find((item) => item.category === category)?.status;
+
+  it("aponta memória insuficiente para engenharia com orçamento baixo", () => {
+    const result = computeLocalBuild({ ...base, budget: 3500, sector: "engenharia", softwares: ["Revit"] });
+    expect(result.fit?.insufficient).toBeGreaterThan(0);
+  });
+
+  it("aponta excesso quando o mínimo força peças caras no escritório", () => {
+    const result = computeLocalBuild({ ...base, sector: "escritorio", softwares: [], ...budgetFromRange({ min: 15000, max: null }) });
+    expect(result.fit?.excess).toBeGreaterThan(0);
+  });
+
+  it("não aponta problema em uma build equilibrada de escritório", () => {
+    const result = computeLocalBuild({ ...base, budget: 4000, sector: "escritorio", softwares: ["Excel Avançado"] });
+    expect(result.fit?.excess).toBe(0);
+    expect(result.fit?.insufficient).toBe(0);
+  });
+
+  it("Docker pede 32GB de memória", () => {
+    const result = computeLocalBuild({ ...base, budget: 3500, sector: "desenvolvimento", softwares: ["Docker"] });
+    expect(status(result, "ram")).toBe("insuficiente");
+  });
+
+  it("avalia só as peças escolhidas na build do usuário", () => {
+    const cpu = CPUS.find((item) => item.id === "r5-5600");
+    const gpu = GPUS.find((item) => item.id === "rtx5080");
+    const ram = RAMS.find((item) => item.id === "ddr4-8");
+    const fit = evaluateBuild({ cpu, gpu, ram }, "escritorio", "1080p").fit;
+    expect(fit?.items.map((item) => [item.category, item.status])).toEqual([["cpu", "adequado"], ["gpu", "excesso"], ["ram", "insuficiente"]]);
+  });
+
+  it("gera justificativa técnica sem marca nem modelo", () => {
+    for (const brand of ["amd", "intel"] as const) {
+      const text = computeLocalBuild({ ...base, budget: 12000, brand }).fit?.justification.join(" ") ?? "";
+      expect(text).toContain("Uso previsto");
+      expect(text).not.toMatch(/amd|intel|ryzen|core i|nvidia|geforce|rtx|radeon/i);
+    }
   });
 });

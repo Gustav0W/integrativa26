@@ -226,6 +226,7 @@ export async function explainBuild(result: BuildResult): Promise<{ result: Build
     },
     pecas: result.parts.map((part) => ({ categoria: part.category, nome: part.name, preco: brl(part.price), specs: part.specs, fatosTecnicos: part.reason })),
     observacoesCalculadas: result.insights.map((i) => i.text),
+    adequacaoAoUso: result.fit?.items.map((item) => `${item.label}: ${item.status}. ${item.detail}`) ?? [],
   };
 
   const { output, model } = await askGemini(explanationSchema, [
@@ -241,8 +242,8 @@ Use apenas os números dos dados acima.`,
 
   const reasons = new Map(output.parts.map((p) => [p.category, p.reason.trim()]));
   const insights = output.insights.filter((i) => i.text.trim()).slice(0, 6);
-  // O aviso de orçamento estourado é crítico: garante que ele apareça.
-  if (result.overBudget && result.insights[0]) insights.unshift(result.insights[0]);
+  // Avisos de valor fora da faixa são críticos: garante que apareçam.
+  if ((result.overBudget || result.total < (input.budgetMin ?? 0)) && result.insights[0]) insights.unshift(result.insights[0]);
 
   return {
     reply: output.reply.trim(),

@@ -26,6 +26,7 @@ import type {
   SsdOption,
 } from "./types";
 
+import { analyzeFit, type FitReport } from "./fit";
 import { parsePrompt } from "./nlp";
 
 /* ============================================================================
@@ -792,6 +793,20 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
     insights: [...belowMinimum, ...buildInsights(combo, input, profile, analysis, total, overBudget)],
     interpretation,
     overBudget,
+    fit: analyzeFit({
+      sectors: [input.sector],
+      softwares: input.softwares,
+      signals,
+      useLabel: SECTOR_LABEL[input.sector],
+      gameCap: profile.caps.game,
+      requiredVram: REQUIRED_VRAM[input.resolution],
+      resolutionLabel: RESOLUTION_LABEL[input.resolution],
+      cpuName: cpu.name,
+      gpu: { integrated, vram: gpu.vram, gaming: gpu.gaming },
+      ramGb: ram.capacity,
+      storageGb: combo.ssd.capacity,
+      psu: { watts: combo.psu.watts, requiredWatts: requiredPsuWatts(cpu, gpu) },
+    }),
     source: "local",
     input,
   };
@@ -827,6 +842,7 @@ export interface BuildEvaluation {
   overall: number | null;
   bottleneck: number | null;
   fpsEstimate: number | null;
+  fit: FitReport | null;
   verdict: { tone: Insight["tone"]; title: string; text: string };
   tips: Insight[];
 }
@@ -922,6 +938,7 @@ export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[] | 
       overall: null,
       bottleneck: null,
       fpsEstimate: null,
+      fit: null,
       verdict: {
         tone: "info",
         title: build.cpu && build.gpu === "integrated" && !build.cpu.igpu ? "Escolha uma placa de vídeo" : "Escolha processador e placa de vídeo",
@@ -1007,10 +1024,6 @@ export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[] | 
       });
     }
   }
-  const heavyGpu = gpu.brand !== "integrated" && gpu.gaming >= 70;
-  if (heavyGpu && !has("gaming") && !has("arquitetura")) {
-    tips.push({ tone: "info", text: `A ${gpu.search} é muito mais do que ${objectives.map((o) => OBJECTIVE_LABEL[o]).join(" e ")} exige — dá para economizar bastante nela.` });
-  }
 
   const missingText = missing.length ? ` Faltam: ${missing.map((m) => CATEGORY_LABEL[m]).join(", ")}.` : "";
   const verdict: BuildEvaluation["verdict"] =
@@ -1022,7 +1035,23 @@ export function evaluateBuild(build: PartialBuild, rawObjectives: Objective[] | 
           ? { tone: "info", title: "Atende, com ressalvas", text: `Pontuação ${overall}/100. Veja abaixo onde vale melhorar.${missingText}` }
           : { tone: "warning", title: "Fraca para o seu uso", text: `Pontuação ${overall}/100 — essa configuração vai sofrer no que você pretende fazer.${missingText}` };
 
+  const fit = analyzeFit({
+    sectors: sector ? [sector] : objectives.map((objective) => (objective === "gaming" ? "gaming" : objective === "arquitetura" ? "engenharia" : objective === "dev" ? "desenvolvimento" : "escritorio")),
+    softwares,
+    signals: profile.signals,
+    useLabel: sector ? SECTOR_LABEL[sector] : objectives.map((objective) => OBJECTIVE_LABEL[objective]).join(" + "),
+    gameCap: profile.caps.game,
+    requiredVram: REQUIRED_VRAM[resolution],
+    resolutionLabel: RESOLUTION_LABEL[resolution],
+    cpuName: build.cpu.name,
+    gpu: { integrated: gpu.brand === "integrated", vram: gpu.vram, gaming: gpu.gaming },
+    ramGb: build.ram?.capacity,
+    storageGb: build.ssd?.capacity,
+    psu: build.psu ? { watts: build.psu.watts, requiredWatts: requiredPsuWatts(build.cpu, gpu) } : undefined,
+  });
+
   return {
+    fit,
     missing,
     checks,
     total,
@@ -1067,6 +1096,9 @@ export function buildSummaryText(result: BuildResult) {
     "COMPATIBILIDADE",
     ...result.compatibility.map((check) => `[${check.ok ? "OK" : "ATENÇÃO"}] ${check.label}: ${check.detail}`),
     "",
+    ...(result.fit
+      ? ["ADEQUAÇÃO AO USO", ...result.fit.items.map((item) => `[${item.status.toUpperCase()}] ${item.label} (${item.value}): ${item.detail}`), "", "JUSTIFICATIVA TÉCNICA", ...result.fit.justification, ""]
+      : []),
     "OBSERVAÇÕES DA IA",
     ...result.insights.map((insight) => `- ${insight.text}`),
     "",

@@ -1,6 +1,7 @@
 "use client";
 
 import { OBJECTIVE_LABEL, type BuildEvaluation } from "@/lib/engine";
+import { FitPanel } from "./fit-panel";
 import { CompatibilityList, InsightList, ProgressBar, ScoreReadout, TONE_UI } from "./ui";
 
 /** Parecer da IA sobre uma build montada pelo usuário ou lida de um PDF. */
@@ -60,6 +61,8 @@ export function EvaluationPanel({ evaluation, resolutionLabel }: { evaluation: B
           <CompatibilityList checks={evaluation.checks} />
         </section>
       )}
+
+      {evaluation.fit && evaluation.fit.items.length > 0 && <FitPanel report={evaluation.fit} />}
 
       {evaluation.tips.length > 0 && (
         <section className="border border-line bg-surface p-4">

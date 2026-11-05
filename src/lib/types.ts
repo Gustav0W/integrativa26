@@ -1,3 +1,5 @@
+import type { FitReport } from "./fit";
+
 export type Sector = "contabilidade" | "design" | "desenvolvimento" | "educacao" | "engenharia" | "escritorio" | "gaming" | "juridico" | "marketing" | "rh" | "saude";
 export type Objective = "gaming" | "arquitetura" | "dev" | "office";
 export type Resolution = "1080p" | "1440p" | "4k";
@@ -85,6 +87,8 @@ export interface BuildResult {
   insights: Insight[];
   interpretation: string[];
   overBudget: boolean;
+  /** Adequação de cada peça ao uso (ausente em resultados salvos antes do recurso). */
+  fit?: FitReport;
   source: "local" | "api";
   /** Modelo de linguagem que escreveu os textos (quando source = "api"). */
   aiModel?: string;
