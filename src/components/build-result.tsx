@@ -2,7 +2,7 @@
 
 import { ViewTransition, startTransition, useRef, useState } from "react";
 import { Copy, Download, Landmark, RotateCcw, X } from "lucide-react";
-import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, buildSummaryText, catalogDateLabel, scoreLabel, sectorLabel } from "@/lib/engine";
+import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, budgetLabel, buildSummaryText, catalogDateLabel, scoreLabel, sectorLabel } from "@/lib/engine";
 import { evaluatePublicPurchase, publicDraftText, brlCents } from "@/lib/public-purchase";
 import type { BuildResult, PublicPurchase } from "@/lib/types";
 import { PartCard } from "./part-card";
@@ -41,6 +41,9 @@ export function BuildResultView({ result, onRegenerate, publicPurchase }: { resu
   const allOk = result.compatibility.every((check) => check.ok);
   const usedPct = (result.total / result.budget) * 100;
   const remaining = result.budget - result.total;
+  const hasMinimum = input.budgetMin !== null && input.budgetMin !== undefined;
+  const belowMinimum = hasMinimum && result.total < (input.budgetMin as number);
+  const inBudget = remaining >= 0 && !belowMinimum;
   const bottleneckPct = Math.round(result.bottleneck * 100);
   const gaming = input.sector === "gaming";
   const paidParts = result.parts.filter((part) => part.price > 0);
@@ -113,13 +116,13 @@ export function BuildResultView({ result, onRegenerate, publicPurchase }: { resu
           </button>
           <div className="p-4">
             <span className="label-mono flex justify-between text-subtle">
-              Orçamento
-              <span className={remaining >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>{remaining >= 0 ? `sobra ${brl(remaining)}` : `+${brl(-remaining)}`}</span>
+              {hasMinimum ? "Faixa de valor" : "Orçamento"}
+              <span className={inBudget ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+                {belowMinimum ? "abaixo do mínimo" : remaining < 0 ? `+${brl(-remaining)}` : hasMinimum ? "dentro da faixa" : `sobra ${brl(remaining)}`}
+              </span>
             </span>
-            <span className="mt-1.5 mb-2 block font-mono text-sm font-semibold">
-              {usedPct.toFixed(0)}% de {brl(result.budget)}
-            </span>
-            <ProgressBar value={usedPct} tone={result.overBudget ? "danger" : "brand"} />
+            <span className="mt-1.5 mb-2 block font-mono text-sm font-semibold">{hasMinimum ? budgetLabel(input) : `${usedPct.toFixed(0)}% de ${brl(result.budget)}`}</span>
+            {!hasMinimum && <ProgressBar value={usedPct} tone={result.overBudget ? "danger" : "brand"} />}
           </div>
           <button type="button" onClick={() => setTab("health")} className="p-4 text-left transition hover:bg-surface-2">
             <span className="label-mono block text-subtle">Desempenho p/ seu uso</span>

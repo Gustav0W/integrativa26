@@ -3,13 +3,13 @@
 import { useRef, useState } from "react";
 import { ArrowRight, Landmark, Monitor, RotateCcw, Volume2 } from "lucide-react";
 import { BuildResultView, LOADING_STEPS, LoadingState } from "@/components/build-result";
-import { BudgetField, PageIntro, Panel, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { BudgetRangeField, PageIntro, Panel, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { MONITORS } from "@/lib/catalog";
-import { brl, normalizeInput, sameInput } from "@/lib/engine";
+import { brl, budgetFromRange, budgetRangeError, normalizeInput, sameInput } from "@/lib/engine";
 import { DEFAULT_PUBLIC_PURCHASE, PUBLIC_RULES, sanitizePurchase } from "@/lib/public-purchase";
 import { useSessionState } from "@/lib/session-state";
-import type { BrandPreference, BuildInput, BuildResult, PublicPurchase } from "@/lib/types";
+import type { BrandPreference, BudgetRange, BuildInput, BuildResult, PublicPurchase } from "@/lib/types";
 
 /** Cenários prontos que preenchem o formulário e geram a build na hora (offline). */
 const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput; publicPurchase?: PublicPurchase }[] = [
@@ -48,15 +48,19 @@ const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput;
 
 const DEFAULT_FORM: BuildInput = { budget: 8000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1440p", brand: "any", monitorId: null, silent: false, prompt: "" };
 
+const DEFAULT_RANGE: BudgetRange = { min: null, max: DEFAULT_FORM.budget };
+
 export function AssistenteClient() {
   const [form, setForm] = useSessionState<BuildInput>("assistente:form", DEFAULT_FORM);
+  const [range, setRange] = useSessionState<BudgetRange>("assistente:faixa", DEFAULT_RANGE);
+  const [rangeError, setRangeError] = useState<string | null>(null);
   const [result, setResult] = useSessionState<BuildResult | null>("assistente:result", null);
   const [publicPurchase, setPublicPurchase] = useSessionState<PublicPurchase>("assistente:compra-publica", DEFAULT_PUBLIC_PURCHASE);
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  const normalizedForm = normalizeInput(form);
+  const normalizedForm = normalizeInput({ ...form, ...budgetFromRange(range) });
   const purchase = sanitizePurchase(publicPurchase);
   const updatePurchase = (changes: Partial<PublicPurchase>) => setPublicPurchase((prev) => ({ ...prev, ...changes }));
   const update = <K extends keyof BuildInput>(key: K, value: BuildInput[K]) => setForm((prev) => ({ ...prev, [key]: value }));
@@ -64,7 +68,10 @@ export function AssistenteClient() {
 
   const generate = async (override?: BuildInput) => {
     if (loading) return;
-    const payload = normalizeInput(override ?? form);
+    const error = override ? null : budgetRangeError(range);
+    setRangeError(error);
+    if (error) return;
+    const payload = override ? normalizeInput(override) : normalizedForm;
     setForm(payload);
     setLoading(true);
     setLoadingStep(0);
@@ -86,12 +93,18 @@ export function AssistenteClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageIntro code="01" title="Assistente guiado" description="Diga quanto quer gastar e para que vai usar o PC. A IA escolhe as 7 peças, confere a compatibilidade e explica cada escolha." />
+      <PageIntro code="01" title="Assistente guiado" description="Diga a faixa de valor e para que vai usar o PC. A IA escolhe as 7 peças, confere a compatibilidade e explica cada escolha." />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="min-w-0 space-y-4 lg:col-span-4">
-          <Panel index="01" title="Quanto você quer gastar?">
-            <BudgetField value={normalizedForm.budget} onChange={(value) => update("budget", value)} />
+          <Panel index="01" title="Faixa de valor">
+            <BudgetRangeField
+              value={range}
+              onChange={(value) => {
+                setRange(value);
+                setRangeError(null);
+              }}
+            />
           </Panel>
 
           <Panel index="02" title="Setor e softwares">
@@ -151,10 +164,16 @@ export function AssistenteClient() {
                     <input id="public-spent" type="number" min={0} step={100} value={publicPurchase.spentThisYear || ""} placeholder="0" onChange={(event) => updatePurchase({ spentThisYear: Number(event.target.value) })} className={inputClass} />
                   </div>
                 </div>
-                <p className="text-xs text-subtle">O orçamento do passo 01 vale por PC. Em “já gasto”, some o que a unidade comprou neste ano no mesmo ramo de atividade.</p>
+                <p className="text-xs text-subtle">A faixa de valor do passo 01 vale por PC. Em “já gasto”, some o que a unidade comprou neste ano no mesmo ramo de atividade.</p>
               </div>
             )}
           </Panel>
+
+          {rangeError && (
+            <p role="alert" className="border border-l-4 border-line border-l-copper bg-surface px-4 py-3 text-sm text-muted">
+              {rangeError}
+            </p>
+          )}
 
           <button type="button" onClick={() => void generate()} disabled={loading} className={`${primaryButton} w-full py-4`}>
             {loading ? "Gerando…" : "Gerar build ideal com IA"}
@@ -191,6 +210,8 @@ export function AssistenteClient() {
                       type="button"
                       onClick={() => {
                         setForm(preset.input);
+                        setRange({ min: null, max: preset.input.budget });
+                        setRangeError(null);
                         setPublicPurchase(preset.publicPurchase ?? { ...purchase, enabled: false });
                         void generate(preset.input);
                       }}

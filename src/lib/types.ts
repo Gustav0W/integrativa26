@@ -12,7 +12,10 @@ export type InsightTone = "success" | "info" | "warning";
 
 /** Dados que o usuário envia para a IA (local ou remota). */
 export interface BuildInput {
+  /** Valor máximo. Sem máximo informado, usa o teto do catálogo (BUDGET_MAX). */
   budget: number;
+  /** Valor mínimo (opcional). */
+  budgetMin?: number | null;
   /** Setor principal de uso. */
   sector: Sector;
   /** Softwares específicos do setor. */
@@ -22,6 +25,12 @@ export interface BuildInput {
   monitorId: string | null;
   silent: boolean;
   prompt: string;
+}
+
+/** Faixa digitada no formulário: pelo menos um dos dois valores é obrigatório. */
+export interface BudgetRange {
+  min: number | null;
+  max: number | null;
 }
 
 /** Dados da compra feita por um órgão público (modo opcional do Assistente). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeLocalBuild, normalizeInput, sanitizeInput } from "./engine";
+import { budgetFromRange, budgetLabel, budgetRangeError, computeLocalBuild, normalizeInput, sanitizeInput } from "./engine";
 import { MONITORS } from "./catalog";
 import type { BuildInput } from "./types";
 
@@ -66,5 +66,45 @@ describe("sanitizeInput", () => {
   it("normaliza builds antigas salvas antes da migração para setores", () => {
     const legacy = { budget: 6000, objectives: ["gaming"], resolution: "1080p", brand: "any", includePeripherals: false, silent: false, prompt: "" } as unknown as BuildInput;
     expect(normalizeInput(legacy)).toMatchObject({ sector: "gaming", softwares: [], monitorId: null, resolution: "1080p" });
+  });
+});
+
+describe("faixa de valor", () => {
+  it("só máximo: mantém o teto", () => {
+    const input = { ...base, ...budgetFromRange({ min: null, max: 6000 }) };
+    expect(computeLocalBuild(input).total).toBeLessThanOrEqual(6000);
+    expect(budgetLabel(input)).toContain("até");
+  });
+
+  it("só mínimo: não fica abaixo do valor informado", () => {
+    const input = { ...base, sector: "escritorio" as const, softwares: [], ...budgetFromRange({ min: 9000, max: null }) };
+    const result = computeLocalBuild(input);
+    expect(result.total).toBeGreaterThanOrEqual(9000);
+    expect(budgetLabel(input)).toContain("a partir de");
+    expect(result.insights.some((insight) => insight.text.includes("economizou"))).toBe(false);
+  });
+
+  it("mínimo e máximo: fica dentro da faixa, contando o monitor", () => {
+    const input = { ...base, monitorId: "mon-qhd", ...budgetFromRange({ min: 7000, max: 9000 }) };
+    const { total } = computeLocalBuild(input);
+    expect(total).toBeGreaterThanOrEqual(7000);
+    expect(total).toBeLessThanOrEqual(9000);
+  });
+
+  it("avisa quando nenhuma combinação cabe na faixa", () => {
+    const result = computeLocalBuild({ ...base, ...budgetFromRange({ min: 5000, max: 5000 }) });
+    expect(result.total).toBeLessThan(5000);
+    expect(result.insights[0].text).toContain("Nenhuma combinação compatível");
+  });
+
+  it("valida o preenchimento", () => {
+    expect(budgetRangeError({ min: null, max: null })).toContain("Preencha");
+    expect(budgetRangeError({ min: 9000, max: 5000 })).toContain("maior que o máximo");
+    expect(budgetRangeError({ min: 5000, max: null })).toBeNull();
+    expect(budgetRangeError({ min: null, max: 5000 })).toBeNull();
+  });
+
+  it("a API ignora mínimo maior que o máximo", () => {
+    expect(sanitizeInput({ ...base, budget: 5000, budgetMin: 9000 }).budgetMin).toBeNull();
   });
 });

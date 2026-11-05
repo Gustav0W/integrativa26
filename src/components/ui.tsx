@@ -6,7 +6,7 @@ import { CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, Gradua
 import { BUDGET_MAX, BUDGET_MIN, SECTORS } from "@/lib/catalog";
 import { brl, clampBudget } from "@/lib/engine";
 import { inputClass } from "./styles";
-import type { InsightTone, Objective, PartCategory, Resolution, Sector } from "@/lib/types";
+import type { BudgetRange, InsightTone, Objective, PartCategory, Resolution, Sector } from "@/lib/types";
 
 /* ----------------------------------------------------------------------------
  * Categorias de peça: código curto (estilo ficha técnica) + cor da barra de custo
@@ -268,55 +268,41 @@ export function SectorPicker({
   );
 }
 
-const BUDGET_TICKS = [3000, 5000, 10000, 15000, 20000];
 
-export function BudgetField({ value, onChange }: { value: number; onChange: (value: number) => void }) {
-  const clamped = clampBudget(value);
+export function BudgetRangeField({ value, onChange }: { value: BudgetRange; onChange: (value: BudgetRange) => void }) {
+  const fields = [
+    { key: "min", label: "Valor mínimo", placeholder: "Sem mínimo" },
+    { key: "max", label: "Valor máximo", placeholder: "Sem máximo" },
+  ] as const;
   return (
     <div>
-      <div className="flex items-baseline gap-2 border-b border-ink/70 pb-1 focus-within:border-brand">
-        <span className="font-mono text-lg text-subtle">R$</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={BUDGET_MIN}
-          max={BUDGET_MAX}
-          step={100}
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
-          onBlur={() => onChange(clamped)}
-          aria-label="Orçamento máximo em reais"
-          className="w-full bg-transparent font-mono text-3xl font-semibold tracking-tight outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
-        />
-      </div>
-      <input
-        type="range"
-        min={BUDGET_MIN}
-        max={BUDGET_MAX}
-        step={250}
-        value={clamped}
-        onChange={(event) => onChange(Number(event.target.value))}
-        aria-label="Ajustar orçamento"
-        className="mt-5 w-full cursor-pointer accent-brand"
-      />
-      {/* Régua com marcações */}
-      <div className="relative mt-1 h-5">
-        {BUDGET_TICKS.map((tick) => {
-          const left = ((tick - BUDGET_MIN) / (BUDGET_MAX - BUDGET_MIN)) * 100;
+      <div className="grid grid-cols-2 gap-4">
+        {fields.map(({ key, label, placeholder }) => {
+          const current = value[key];
           return (
-            <button
-              key={tick}
-              type="button"
-              onClick={() => onChange(tick)}
-              style={{ left: `${left}%` }}
-              className={`absolute -translate-x-1/2 font-mono text-[10px] transition first:translate-x-0 last:-translate-x-full ${clamped === tick ? "text-brand-text" : "text-subtle hover:text-fg"}`}
-              title={`Usar ${brl(tick)}`}
-            >
-              {tick / 1000}k
-            </button>
+            <div key={key} className="min-w-0">
+              <label htmlFor={`budget-${key}`} className="label-mono mb-1.5 block text-subtle">{label}</label>
+              <div className="flex items-baseline gap-1.5 border-b border-ink/70 pb-1 focus-within:border-brand">
+                <span className="font-mono text-sm text-subtle">R$</span>
+                <input
+                  id={`budget-${key}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={BUDGET_MIN}
+                  max={BUDGET_MAX}
+                  step={100}
+                  value={current ?? ""}
+                  placeholder={placeholder}
+                  onChange={(event) => onChange({ ...value, [key]: event.target.value === "" ? null : Number(event.target.value) })}
+                  onBlur={() => current !== null && onChange({ ...value, [key]: clampBudget(current) })}
+                  className="w-full min-w-0 bg-transparent font-mono text-xl font-semibold tracking-tight outline-none placeholder:text-sm placeholder:font-normal placeholder:text-subtle [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              </div>
+            </div>
           );
         })}
       </div>
+      <p className="mt-2.5 text-xs text-subtle">Preencha pelo menos um dos valores, entre {brl(BUDGET_MIN)} e {brl(BUDGET_MAX)}.</p>
     </div>
   );
 }

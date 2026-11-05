@@ -2,7 +2,7 @@ import { google, type GoogleLanguageModelOptions } from "@ai-sdk/google";
 import { generateText, Output, type ModelMessage } from "ai";
 import { z } from "zod";
 import { CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PANEL_GUIDE, PSUS, RAMS, SECTORS, SSDS } from "../catalog";
-import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, SECTOR_LABEL, brl, catalogDateLabel, normalizeInput, type BuildEvaluation } from "../engine";
+import { CATEGORY_LABEL, OBJECTIVE_LABEL, RESOLUTION_LABEL, SECTOR_LABEL, brl, budgetLabel, catalogDateLabel, normalizeInput, type BuildEvaluation } from "../engine";
 import type { BuildInput, BuildResult, PromptSignals } from "../types";
 
 /* ============================================================================
@@ -212,7 +212,7 @@ export async function explainBuild(result: BuildResult): Promise<{ result: Build
       softwares: input.softwares,
       resolucao: input.sector === "gaming" ? RESOLUTION_LABEL[input.resolution] : null,
       monitor: input.monitorId ? MONITORS.find((monitor) => monitor.id === input.monitorId)?.name ?? null : null,
-      orcamento: brl(input.budget),
+      orcamento: budgetLabel(input),
       textoDoUsuario: input.prompt || null,
     },
     build: {

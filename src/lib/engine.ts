@@ -1,5 +1,6 @@
 import { BUDGET_MAX, BUDGET_MIN, CATALOG_UPDATED_AT, CASE_KITS, CPUS, GPUS, MOBOS, MONITORS, PSUS, RAMS, SECTORS, SSDS, googleShoppingUrl } from "./catalog";
 import type {
+  BudgetRange,
   BuildInput,
   BuildResult,
   CaseKitOption,
@@ -194,6 +195,23 @@ export function clampBudget(value: number) {
   return Math.min(BUDGET_MAX, Math.max(BUDGET_MIN, Math.round(safe)));
 }
 
+/** Converte a faixa do formulário: sem máximo, o limite é o teto do catálogo. */
+export function budgetFromRange(range: BudgetRange) {
+  return { budget: clampBudget(range.max ?? BUDGET_MAX), budgetMin: range.min === null ? null : clampBudget(range.min) };
+}
+
+export function budgetRangeError(range: BudgetRange) {
+  if (range.min === null && range.max === null) return "Preencha o valor mínimo, o máximo ou os dois.";
+  const { budget, budgetMin } = budgetFromRange(range);
+  return budgetMin !== null && budgetMin > budget ? "O valor mínimo não pode ser maior que o máximo." : null;
+}
+
+/** Faixa em texto: "até R$ 8.000", "a partir de R$ 5.000" ou "de R$ 5.000 a R$ 8.000". */
+export function budgetLabel({ budget, budgetMin }: Pick<BuildInput, "budget" | "budgetMin">) {
+  if (budgetMin === null || budgetMin === undefined) return `até ${brl(budget)}`;
+  return budget >= BUDGET_MAX ? `a partir de ${brl(budgetMin)}` : `de ${brl(budgetMin)} a ${brl(budget)}`;
+}
+
 export function normalizeInput(input: BuildInput): BuildInput {
   const legacyObjectives = (input as BuildInput & { objectives?: unknown }).objectives;
   const legacySector = Array.isArray(legacyObjectives)
@@ -202,15 +220,18 @@ export function normalizeInput(input: BuildInput): BuildInput {
   const sector = SECTOR_PRIORITY.includes(input.sector) ? input.sector : legacySector;
   const softwares = Array.isArray(input.softwares) ? input.softwares.filter((software): software is string => typeof software === "string") : [];
   const prompt = typeof input.prompt === "string" ? input.prompt : "";
+  const budget = clampBudget(input.budget);
+  const budgetMin = typeof input.budgetMin === "number" && Number.isFinite(input.budgetMin) ? clampBudget(input.budgetMin) : null;
   return {
     ...input,
+    budgetMin: budgetMin !== null && budgetMin <= budget ? budgetMin : null,
     sector,
     softwares: softwares.filter((software) => SECTORS[sector].softwares.includes(software)),
     monitorId: MONITORS.some((monitor) => monitor.id === input.monitorId) ? input.monitorId : null,
     resolution: input.resolution === "1080p" || input.resolution === "4k" ? input.resolution : "1440p",
     brand: input.brand === "amd" || input.brand === "intel" ? input.brand : "any",
     silent: input.silent === true,
-    budget: clampBudget(input.budget),
+    budget,
     prompt: prompt.trim().slice(0, 500),
   };
 }
@@ -220,6 +241,7 @@ export function sanitizeInput(raw: unknown): BuildInput {
   const data = (raw ?? {}) as Partial<Record<keyof BuildInput, unknown>>;
   return normalizeInput({
     budget: typeof data.budget === "number" ? data.budget : Number(data.budget),
+    budgetMin: typeof data.budgetMin === "number" ? data.budgetMin : null,
     sector: SECTOR_PRIORITY.includes(data.sector as Sector) ? (data.sector as Sector) : "escritorio",
     softwares: Array.isArray(data.softwares) ? data.softwares.map(String) : [],
     resolution: data.resolution === "1080p" || data.resolution === "4k" ? data.resolution : "1440p",
@@ -408,7 +430,7 @@ export function comboPrice(combo: Combo) {
  * - mode "cheapest": combinação compatível mais barata (fallback de orçamento).
  * `locked` fixa peças já escolhidas pelo usuário ("Completar com a IA").
  */
-function searchCombos(input: BuildInput, profile: Profile, limit: number, mode: "best" | "cheapest", locked: PartialBuild = {}): Combo | null {
+function searchCombos(input: BuildInput, profile: Profile, limit: number, mode: "best" | "cheapest", locked: PartialBuild = {}, floor = 0): Combo | null {
   let best: Combo | null = null;
   let bestValue = Number.NEGATIVE_INFINITY;
   const cpus = locked.cpu ? [locked.cpu] : CPUS.filter((cpu) => input.brand === "any" || cpu.brand === input.brand);
@@ -439,7 +461,7 @@ function searchCombos(input: BuildInput, profile: Profile, limit: number, mode: 
               for (const ssd of locked.ssd ? [locked.ssd] : SSDS) {
                 const combo: Combo = { cpu, mobo, ram, gpu, psu, kit, ssd };
                 const total = comboPrice(combo);
-                if (total > limit) continue;
+                if (total > limit || total < floor) continue;
                 const value = mode === "cheapest" ? -total : analyzeCombo(combo, profile).score - (profile.lambda * total) / 1000;
                 if (value > bestValue) {
                   bestValue = value;
@@ -658,7 +680,7 @@ function buildInsights(combo: Combo, input: BuildInput, profile: Profile, analys
   insights.push({ tone: "info", text: PLATFORM_NOTE[cpu.socket] });
 
   const leftover = input.budget - total;
-  if (!overBudget && leftover >= Math.max(800, input.budget * 0.15)) {
+  if (!overBudget && input.budgetMin === null && leftover >= Math.max(800, input.budget * 0.15)) {
     insights.push({
       tone: "success",
       text: `A IA economizou ${brl(leftover)}: acima disso o ganho para ${SECTOR_LABEL[input.sector]} seria pequeno. Considere usar a sobra em um bom monitor ou nobreak.`,
@@ -715,22 +737,28 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
   const signals = signalsOverride ?? parsePrompt(input.prompt);
   const profile = buildProfile(input, signals);
   const monitor = MONITORS.find((item) => item.id === input.monitorId) ?? null;
-  const pcBudget = input.budget - (monitor?.price ?? 0);
+  const monitorPrice = monitor?.price ?? 0;
+  const pcBudget = input.budget - monitorPrice;
+  const minimum = input.budgetMin ?? 0;
 
-  const combo = searchCombos(input, profile, pcBudget, "best", locked) ?? searchCombos(input, profile, Number.POSITIVE_INFINITY, "cheapest", locked);
+  const combo =
+    (minimum > 0 ? searchCombos(input, profile, pcBudget, "best", locked, minimum - monitorPrice) : null) ??
+    searchCombos(input, profile, pcBudget, "best", locked) ??
+    searchCombos(input, profile, Number.POSITIVE_INFINITY, "cheapest", locked);
   if (!combo) throw new Error("As peças fixadas são incompatíveis entre si: nenhuma combinação encontrada.");
 
   const analysis = analyzeCombo(combo, profile);
   const pcTotal = comboPrice(combo);
-  const total = pcTotal + (monitor?.price ?? 0);
+  const total = pcTotal + monitorPrice;
   const overBudget = total > input.budget;
+  const belowMinimum: Insight[] = total < minimum ? [{ tone: "warning", text: `Nenhuma combinação compatível fica ${budgetLabel(input)}. Esta é a melhor opção abaixo do mínimo informado.` }] : [];
   const { cpu, gpu, mobo, ram } = combo;
   const integrated = gpu.brand === "integrated";
 
   const interpretation = [
     sectorLabel(input.sector, input.sector === "gaming" ? input.resolution : undefined),
     ...input.softwares,
-    `Teto de ${brl(input.budget)}`,
+    `Valor ${budgetLabel(input)}`,
     input.brand === "any" ? "Marca indiferente" : `Preferência ${input.brand === "amd" ? "AMD" : "Intel"}`,
     ...(profile.silent ? ["Foco em silêncio"] : []),
     ...(monitor ? [`Monitor ${monitor.name}`] : []),
@@ -761,7 +789,7 @@ export function computeLocalBuild(rawInput: BuildInput, locked: PartialBuild = {
     fpsEstimate: input.sector === "gaming" && !integrated ? estimateFps(analysis.metrics.game, input.resolution) : null,
     bottleneck: analysis.bottleneck,
     compatibility: compatibilityFor(combo),
-    insights: buildInsights(combo, input, profile, analysis, total, overBudget),
+    insights: [...belowMinimum, ...buildInsights(combo, input, profile, analysis, total, overBudget)],
     interpretation,
     overBudget,
     source: "local",
@@ -1020,7 +1048,7 @@ export function buildSummaryText(result: BuildResult) {
     line,
     `Uso: ${sectorLabel(input.sector, input.sector === "gaming" ? input.resolution : undefined)}`,
     ...(input.softwares.length ? [`Softwares: ${input.softwares.join(", ")}`] : []),
-    `Orçamento máximo: ${brl(input.budget)}`,
+    `Faixa de valor: ${budgetLabel(input)}`,
     `Preferências: marca ${input.brand === "any" ? "indiferente" : input.brand.toUpperCase()} · monitor ${input.monitorId ? "sim" : "não"} · silêncio ${input.silent ? "sim" : "não"}`,
     ...(input.prompt ? [`Pedido: "${input.prompt}"`] : []),
     "",
@@ -1032,7 +1060,7 @@ export function buildSummaryText(result: BuildResult) {
       ...(part.searchTerms[0] ? [`   Buscar preço: ${googleShoppingUrl(part.searchTerms[0])}`] : []),
     ]),
     line,
-    `TOTAL: ${brl(result.total)} (${((result.total / result.budget) * 100).toFixed(1).replace(".", ",")}% do orçamento)`,
+    `TOTAL: ${brl(result.total)}`,
     `Classe: Build ${result.tier} · Plataforma ${result.platform}`,
     `Desempenho estimado para o uso: ${result.score}/100${result.fpsEstimate ? ` · ~${result.fpsEstimate} FPS em AAA (Ultra)` : ""}`,
     "",
