@@ -5,12 +5,12 @@ import { Copy, Download, Landmark, RotateCcw, X } from "lucide-react";
 import { CATEGORY_LABEL, RESOLUTION_LABEL, brl, budgetLabel, buildSummaryText, catalogDateLabel, scoreLabel, sectorLabel } from "@/lib/engine";
 import { evaluatePublicPurchase, publicDraftText, brlCents } from "@/lib/public-purchase";
 import type { BuildResult, PublicPurchase } from "@/lib/types";
-import { FitPanel } from "./fit-panel";
 import { PartCard } from "./part-card";
 import { PublicPurchasePanel } from "./public-purchase-panel";
+import { TechnicalReport } from "./technical-report";
 import { CATEGORY_UI, CompatibilityList, InsightList, ProgressBar, ScoreReadout, TONE_UI, secondaryButton } from "./ui";
 
-type Tab = "parts" | "fit" | "health" | "tips" | "public";
+type Tab = "report" | "parts" | "health" | "tips" | "public";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "parts", label: "Peças" },
@@ -30,11 +30,11 @@ export function downloadText(filename: string, text: string) {
 
 /** Resultado de uma recomendação: cabeçalho enxuto + detalhes em abas. */
 export function BuildResultView({ result, onRegenerate, publicPurchase }: { result: BuildResult; onRegenerate?: () => void; publicPurchase?: PublicPurchase }) {
-  const [selectedTab, setTabState] = useState<Tab>("parts");
+  const [selectedTab, setTabState] = useState<Tab>(result.fit ? "report" : "parts");
   const evaluation = publicPurchase?.enabled ? evaluatePublicPurchase(result, publicPurchase) : null;
-  const tab = selectedTab === "public" && !evaluation ? "parts" : selectedTab;
+  const tab = (selectedTab === "public" && !evaluation) || (selectedTab === "report" && !result.fit) ? "parts" : selectedTab;
   const fitIssues = result.fit ? result.fit.excess + result.fit.insufficient : 0;
-  const tabs = [TABS[0], ...(result.fit ? [{ id: "fit" as const, label: "Adequação" }] : []), ...TABS.slice(1), ...(evaluation ? [{ id: "public" as const, label: "Compra pública" }] : [])];
+  const tabs = [...(result.fit ? [{ id: "report" as const, label: "Parecer técnico" }] : []), ...TABS, ...(evaluation ? [{ id: "public" as const, label: "Compra pública" }] : [])];
   /** Dentro de startTransition para o React animar a troca de aba (crossfade). */
   const setTab = (next: Tab) => startTransition(() => setTabState(next));
   const [toast, setToast] = useState<string | null>(null);
@@ -164,7 +164,7 @@ export function BuildResultView({ result, onRegenerate, publicPurchase }: { resu
           >
             {label}
             {id === "tips" && <span className="ml-1.5 text-brand-text">({result.insights.length})</span>}
-            {id === "fit" && fitIssues > 0 && <span className="ml-1.5 text-copper">({fitIssues})</span>}
+            {id === "report" && fitIssues > 0 && <span className="ml-1.5 text-copper">({fitIssues})</span>}
           </button>
         ))}
       </div>
@@ -239,7 +239,7 @@ export function BuildResultView({ result, onRegenerate, publicPurchase }: { resu
             </div>
           )}
 
-          {tab === "fit" && result.fit && <FitPanel report={result.fit} justification />}
+          {tab === "report" && <TechnicalReport result={result} />}
 
           {tab === "public" && evaluation && <PublicPurchasePanel evaluation={evaluation} onExport={handlePublicExport} />}
 

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     default: "SmartBuild AI — Monte o PC ideal com IA",
     template: "%s · SmartBuild AI",
   },
-  description: "Recomendações de builds de PC compatíveis, sem gargalos e dentro do orçamento.",
+  description: "Configuração de computadores por setor, com parecer técnico e apoio a compras públicas.",
 };
 
 /** Aplica o tema salvo antes da primeira pintura (evita piscar claro → escuro). */

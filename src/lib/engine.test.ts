@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { budgetFromRange, budgetLabel, budgetRangeError, computeLocalBuild, evaluateBuild, normalizeInput, sanitizeInput } from "./engine";
 import { CPUS, GPUS, MONITORS, RAMS } from "./catalog";
+import { describeNeed } from "./fit";
 import type { BuildInput } from "./types";
 
 const base: BuildInput = { budget: 6000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "" };
@@ -110,6 +111,14 @@ describe("faixa de valor", () => {
 });
 
 describe("adequação ao uso", () => {
+  it("mostra necessidades diferentes por setor", () => {
+    const office = describeNeed("escritorio", []);
+    const engineering = describeNeed("engenharia", ["Revit"]);
+    expect(office.references).not.toEqual(engineering.references);
+    expect(engineering.references).toContain("placa dedicada necessária");
+    expect(describeNeed("saude", []).references).not.toEqual(describeNeed("rh", []).references);
+  });
+
   const status = (result: ReturnType<typeof computeLocalBuild>, category: string) => result.fit?.items.find((item) => item.category === category)?.status;
 
   it("aponta memória insuficiente para engenharia com orçamento baixo", () => {

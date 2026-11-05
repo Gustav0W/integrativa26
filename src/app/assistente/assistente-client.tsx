@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { ArrowRight, Landmark, Monitor, RotateCcw, Volume2 } from "lucide-react";
 import { BuildResultView, LOADING_STEPS, LoadingState } from "@/components/build-result";
-import { BudgetRangeField, PageIntro, Panel, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
+import { BudgetRangeField, PageIntro, Panel, PrivacyNote, SectorPicker, Segmented, ToggleRow, inputClass, primaryButton, secondaryButton } from "@/components/ui";
 import { requestRecommendation, sleep } from "@/lib/api";
 import { MONITORS } from "@/lib/catalog";
 import { brl, budgetFromRange, budgetRangeError, normalizeInput, sameInput } from "@/lib/engine";
@@ -13,6 +13,20 @@ import type { BrandPreference, BudgetRange, BuildInput, BuildResult, PublicPurch
 
 /** Cenários prontos que preenchem o formulário e geram a build na hora (offline). */
 const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput; publicPurchase?: PublicPurchase }[] = [
+  {
+    id: "compra-publica",
+    title: "Compra pública · Administrativo",
+    subtitle: "20 PCs · R$ 4.000 cada",
+    input: { budget: 4000, sector: "escritorio", softwares: ["Excel Avançado", "Browser (Muitas abas)"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "Computadores para os servidores de um setor administrativo do Estado." },
+    publicPurchase: { enabled: true, quantity: 20, spentThisYear: 0 },
+  },
+  {
+    id: "compra-publica-engenharia",
+    title: "Compra pública · Engenharia",
+    subtitle: "5 PCs · R$ 12.000 cada",
+    input: { budget: 12000, sector: "engenharia", softwares: ["AutoCAD", "Revit"], resolution: "1440p", brand: "any", monitorId: null, silent: false, prompt: "Computadores para a equipe de projetos de obras públicas." },
+    publicPurchase: { enabled: true, quantity: 5, spentThisYear: 0 },
+  },
   {
     id: "gamer-1080p",
     title: "Gamer Entrada",
@@ -37,16 +51,9 @@ const PRESETS: { id: string; title: string; subtitle: string; input: BuildInput;
     subtitle: "Com monitor · R$ 3.500",
     input: { budget: 3500, sector: "escritorio", softwares: ["Excel Avançado", "Browser (Muitas abas)"], resolution: "1080p", brand: "any", monitorId: "mon-100hz", silent: false, prompt: "PC para faculdade, aulas online, Office e muitas abas no navegador." },
   },
-  {
-    id: "compra-publica",
-    title: "Compra pública (SC)",
-    subtitle: "20 PCs de escritório · R$ 4.000 cada",
-    input: { budget: 4000, sector: "escritorio", softwares: ["Excel Avançado", "Browser (Muitas abas)"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "Computadores para os servidores de um setor administrativo do Estado." },
-    publicPurchase: { enabled: true, quantity: 20, spentThisYear: 0 },
-  },
 ];
 
-const DEFAULT_FORM: BuildInput = { budget: 8000, sector: "gaming", softwares: ["Jogos AAA"], resolution: "1440p", brand: "any", monitorId: null, silent: false, prompt: "" };
+const DEFAULT_FORM: BuildInput = { budget: 5000, sector: "escritorio", softwares: ["Excel Avançado"], resolution: "1080p", brand: "any", monitorId: null, silent: false, prompt: "" };
 
 const DEFAULT_RANGE: BudgetRange = { min: null, max: DEFAULT_FORM.budget };
 
@@ -93,11 +100,32 @@ export function AssistenteClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-      <PageIntro code="01" title="Assistente guiado" description="Diga a faixa de valor e para que vai usar o PC. A IA escolhe as 7 peças, confere a compatibilidade e explica cada escolha." />
+      <PageIntro code="01" title="Assistente guiado" description="Diga a faixa de valor e para que vai usar o PC. A IA define a configuração, confere a compatibilidade e entrega um parecer técnico." />
+
+      <PrivacyNote />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <aside className="min-w-0 space-y-4 lg:col-span-4">
-          <Panel index="01" title="Faixa de valor">
+          <Panel index="01" title="Compra pública" aside={<span className="label-mono text-subtle">opcional</span>}>
+            <ToggleRow icon={Landmark} label="Compra de órgão público (SC)" description="Confere a Lei 14.133 e as regras de Santa Catarina" checked={purchase.enabled} onChange={(value) => updatePurchase({ enabled: value })} />
+            {purchase.enabled && (
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="public-quantity" className="label-mono mb-1.5 block text-subtle">Quantidade de PCs</label>
+                    <input id="public-quantity" type="number" min={1} max={PUBLIC_RULES.maxQuantity} value={publicPurchase.quantity || ""} placeholder="1" onChange={(event) => updatePurchase({ quantity: Number(event.target.value) })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label htmlFor="public-spent" className="label-mono mb-1.5 block text-subtle">Já gasto no ano (R$)</label>
+                    <input id="public-spent" type="number" min={0} step={100} value={publicPurchase.spentThisYear || ""} placeholder="0" onChange={(event) => updatePurchase({ spentThisYear: Number(event.target.value) })} className={inputClass} />
+                  </div>
+                </div>
+                <p className="text-xs text-subtle">A faixa de valor do passo 02 vale por PC. Em “já gasto”, some o que a unidade comprou neste ano no mesmo ramo de atividade.</p>
+              </div>
+            )}
+          </Panel>
+
+          <Panel index="02" title="Faixa de valor">
             <BudgetRangeField
               value={range}
               onChange={(value) => {
@@ -107,11 +135,11 @@ export function AssistenteClient() {
             />
           </Panel>
 
-          <Panel index="02" title="Setor e softwares">
+          <Panel index="03" title="Setor e softwares">
             <SectorPicker sector={normalizedForm.sector} onSectorChange={(value) => update("sector", value)} softwares={normalizedForm.softwares} onSoftwaresChange={(value) => update("softwares", value)} resolution={normalizedForm.resolution} onResolutionChange={(value) => update("resolution", value)} />
           </Panel>
 
-          <Panel index="03" title="Preferências" aside={<span className="label-mono text-subtle">opcional</span>}>
+          <Panel index="04" title="Preferências" aside={<span className="label-mono text-subtle">opcional</span>}>
             <p className="label-mono mb-2 text-subtle">Marca do processador</p>
             <Segmented<BrandPreference>
               value={normalizedForm.brand}
@@ -140,33 +168,14 @@ export function AssistenteClient() {
             </div>
           </Panel>
 
-          <Panel index="04" title="Algo mais?" aside={<span className="label-mono text-subtle">{normalizedForm.prompt.length}/500</span>}>
+          <Panel index="05" title="Algo mais?" aside={<span className="label-mono text-subtle">{normalizedForm.prompt.length}/500</span>}>
             <textarea
               value={normalizedForm.prompt}
               onChange={(event) => update("prompt", event.target.value.slice(0, 500))}
               rows={3}
-              placeholder="Ex.: Quero rodar Baldur's Gate 3 no ultra e usar dois monitores."
+              placeholder="Ex.: Uso modelos grandes no Revit e dois monitores."
               className={`${inputClass} resize-none`}
             />
-          </Panel>
-
-          <Panel index="05" title="Compra pública" aside={<span className="label-mono text-subtle">opcional</span>}>
-            <ToggleRow icon={Landmark} label="Compra de órgão público (SC)" description="Confere a Lei 14.133 e as regras de Santa Catarina" checked={purchase.enabled} onChange={(value) => updatePurchase({ enabled: value })} />
-            {purchase.enabled && (
-              <div className="mt-3 space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="public-quantity" className="label-mono mb-1.5 block text-subtle">Quantidade de PCs</label>
-                    <input id="public-quantity" type="number" min={1} max={PUBLIC_RULES.maxQuantity} value={publicPurchase.quantity || ""} placeholder="1" onChange={(event) => updatePurchase({ quantity: Number(event.target.value) })} className={inputClass} />
-                  </div>
-                  <div>
-                    <label htmlFor="public-spent" className="label-mono mb-1.5 block text-subtle">Já gasto no ano (R$)</label>
-                    <input id="public-spent" type="number" min={0} step={100} value={publicPurchase.spentThisYear || ""} placeholder="0" onChange={(event) => updatePurchase({ spentThisYear: Number(event.target.value) })} className={inputClass} />
-                  </div>
-                </div>
-                <p className="text-xs text-subtle">A faixa de valor do passo 01 vale por PC. Em “já gasto”, some o que a unidade comprou neste ano no mesmo ramo de atividade.</p>
-              </div>
-            )}
           </Panel>
 
           {rangeError && (

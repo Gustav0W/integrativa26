@@ -26,7 +26,7 @@ import type {
   SsdOption,
 } from "./types";
 
-import { analyzeFit, type FitReport } from "./fit";
+import { analyzeFit, neutralSpecItems, type FitReport } from "./fit";
 import { parsePrompt } from "./nlp";
 
 /* ============================================================================
@@ -73,7 +73,7 @@ export const SECTOR_LABEL: Record<Sector, string> = {
   design: "Design & Artes",
   desenvolvimento: "Desenvolvimento de Software",
   educacao: "Educação",
-  contabilidade: "Contabilidade",
+  contabilidade: "Financeiro & Contabilidade",
   escritorio: "Escritório / Administrativo",
   juridico: "Jurídico",
   marketing: "Marketing & Conteúdo",
@@ -1099,6 +1099,9 @@ export function buildSummaryText(result: BuildResult) {
     ...(result.fit
       ? ["ADEQUAÇÃO AO USO", ...result.fit.items.map((item) => `[${item.status.toUpperCase()}] ${item.label} (${item.value}): ${item.detail}`), "", "JUSTIFICATIVA TÉCNICA", ...result.fit.justification, ""]
       : []),
+    "ESPECIFICAÇÃO PARA AQUISIÇÃO (SEM MARCA)",
+    ...neutralSpecItems(result.parts).map((item) => `- ${item.spec}`),
+    "",
     "OBSERVAÇÕES DA IA",
     ...result.insights.map((insight) => `- ${insight.text}`),
     "",

@@ -1,4 +1,4 @@
-import type { PartCategory, PromptSignals, Sector } from "./types";
+import type { PartCategory, PromptSignals, RecommendedPart, Sector } from "./types";
 
 /**
  * Adequação ao uso: compara cada peça com uma faixa de referência por setor e
@@ -20,16 +20,26 @@ export interface FitItem {
 
 export interface FitReport {
   items: FitItem[];
+  /** O que o setor faz no dia a dia. */
+  useDescription: string;
   excess: number;
   insufficient: number;
   /** Justificativa técnica, sem marca nem modelo, uma frase por linha. */
   justification: string[];
 }
 
+export interface SpecItem {
+  label: string;
+  /** Descrição técnica sem marca nem modelo. */
+  spec: string;
+  unitPrice: number;
+  estimated: boolean;
+}
+
 export interface FitInput {
   sectors: Sector[];
   softwares: string[];
-  signals: PromptSignals;
+  signals: Partial<PromptSignals>;
   useLabel: string;
   /** Nível de jogo que o uso aproveita (0–100) e VRAM pedida pela resolução. */
   gameCap: number;
@@ -52,20 +62,39 @@ interface Need {
   gpuExcess?: number;
 }
 
-const OFFICE: Need = { cores: [4, 10], ram: [16, 32], storage: [480, 1000], gpu: "none" };
-
 const NEEDS: Record<Sector, Need> = {
-  escritorio: OFFICE,
-  contabilidade: OFFICE,
-  educacao: OFFICE,
-  juridico: { ...OFFICE, storage: [480, 2000] },
-  rh: OFFICE,
-  saude: OFFICE,
+  escritorio: { cores: [4, 10], ram: [16, 32], storage: [480, 1000], gpu: "none" },
+  contabilidade: { cores: [6, 10], ram: [16, 32], storage: [500, 1000], gpu: "none" },
+  educacao: { cores: [4, 8], ram: [16, 32], storage: [480, 1000], gpu: "none" },
+  juridico: { cores: [4, 10], ram: [16, 32], storage: [480, 2000], gpu: "none" },
+  rh: { cores: [4, 8], ram: [16, 32], storage: [480, 1000], gpu: "none" },
+  saude: { cores: [6, 12], ram: [16, 32], storage: [500, 1000], gpu: "none" },
   desenvolvimento: { cores: [6, 16], ram: [16, 64], storage: [500, 2000], gpu: "optional" },
   design: { cores: [6, 16], ram: [16, 64], storage: [1000, 4000], gpu: "optional" },
   marketing: { cores: [6, 16], ram: [16, 64], storage: [1000, 4000], gpu: "optional", gpuExcess: 92 },
   engenharia: { cores: [6, 24], ram: [32, 64], storage: [1000, 4000], gpu: "pro" },
   gaming: { cores: [6, 16], ram: [16, 32], storage: [1000, 2000], gpu: "gaming" },
+};
+
+const SECTOR_PROFILE: Record<Sector, string> = {
+  escritorio: "Planilhas, e-mail, navegador e sistemas administrativos.",
+  contabilidade: "Planilhas grandes, sistemas fiscais e vários programas abertos ao mesmo tempo.",
+  educacao: "Aulas, plataformas online, videochamadas e materiais de estudo.",
+  juridico: "Sistemas de processo eletrônico e muitos documentos em PDF.",
+  rh: "Sistemas de pessoal e folha, documentos e navegador.",
+  saude: "Prontuário eletrônico e sistemas de saúde abertos o dia todo.",
+  desenvolvimento: "Editores de código, compilação e ambientes de teste.",
+  design: "Edição de imagem e arquivos gráficos grandes.",
+  marketing: "Criação de conteúdo, imagens e vídeos.",
+  engenharia: "Projetos em CAD e BIM, modelos 3D e arquivos pesados.",
+  gaming: "Jogos, com desempenho gráfico como prioridade.",
+};
+
+const GPU_NEED_LABEL: Record<GpuNeed, string> = {
+  none: "vídeo integrado basta",
+  optional: "placa dedicada opcional",
+  pro: "placa dedicada necessária",
+  gaming: "placa dedicada para jogos",
 };
 
 const GPU_RANK: Record<GpuNeed, number> = { none: 0, optional: 1, pro: 2, gaming: 3 };
@@ -78,7 +107,7 @@ const CORE_HEAVY = ["Streaming", "Docker", "Android Studio", "Premiere Pro"];
 const GPU_EXCESS: Record<Exclude<GpuNeed, "gaming">, number> = { none: 44, optional: 72, pro: 92 };
 const GPU_PRO_MIN_VRAM = 8;
 
-function needFor({ sectors, softwares, signals }: FitInput): Need {
+function needFor({ sectors, softwares, signals }: Pick<FitInput, "sectors" | "softwares" | "signals">): Need {
   const needs = sectors.map((sector) => NEEDS[sector]);
   const range = (key: "cores" | "ram" | "storage"): [number, number] => [Math.max(...needs.map((need) => need[key][0])), Math.max(...needs.map((need) => need[key][1]))];
   const merged: Need = { cores: range("cores"), ram: range("ram"), storage: range("storage"), gpu: needs.reduce<GpuNeed>((best, need) => (GPU_RANK[need.gpu] > GPU_RANK[best] ? need.gpu : best), "none"), gpuExcess: Math.max(...needs.map((need) => need.gpuExcess ?? 0)) || undefined };
@@ -91,6 +120,15 @@ function needFor({ sectors, softwares, signals }: FitInput): Need {
 }
 
 const size = (gb: number) => (gb >= 1000 ? `${gb / 1000}TB` : `${gb}GB`);
+
+/** Resumo do que o setor precisa, para mostrar antes de gerar a configuração. */
+export function describeNeed(sector: Sector, softwares: string[]) {
+  const need = needFor({ sectors: [sector], softwares, signals: {} });
+  return {
+    profile: SECTOR_PROFILE[sector],
+    references: [`${need.cores[0]} a ${need.cores[1]} núcleos`, `${need.ram[0]}GB a ${need.ram[1]}GB de memória`, `${size(need.storage[0])} a ${size(need.storage[1])}`, GPU_NEED_LABEL[need.gpu]],
+  };
+}
 
 function classify(amount: number, [min, max]: [number, number]): FitStatus {
   if (amount < min) return "insuficiente";
@@ -170,8 +208,50 @@ export function analyzeFit(input: FitInput): FitReport {
 
   return {
     items,
+    useDescription: input.sectors.map((sector) => SECTOR_PROFILE[sector]).join(" "),
     excess: items.filter((item) => item.status === "excesso").length,
     insufficient: items.filter((item) => item.status === "insuficiente").length,
     justification: [`Uso previsto: ${useLabel}${softwares.length ? `, com ${softwares.join(", ")}` : ""}.`, ...items.map(justificationLine)],
   };
+}
+
+const ITEM_LABEL: Record<PartCategory, string> = {
+  cpu: "Processador",
+  gpu: "Vídeo",
+  mobo: "Placa-mãe",
+  ram: "Memória",
+  ssd: "Armazenamento",
+  psu: "Fonte",
+  case: "Gabinete",
+  extra: "Monitor",
+};
+
+/** Socket e nome de chipset ficam de fora: indicam o fabricante do processador. */
+function neutralSpec(part: RecommendedPart): string {
+  const [first, second, third] = part.specs;
+  switch (part.category) {
+    case "cpu": {
+      const cores = part.name.match(/(\d+)C\/(\d+)T/);
+      const amount = cores ? `${cores[1]} núcleos e ${cores[2]} threads` : "desempenho compatível com o uso";
+      return `Processador de ${amount}${third?.startsWith("iGPU") ? ", com vídeo integrado" : ""}`;
+    }
+    case "gpu":
+      return part.price > 0 ? `Placa de vídeo dedicada com ${first.replace(" VRAM", "")} de memória` : "Vídeo integrado ao processador";
+    case "mobo":
+      return `Placa-mãe compatível com o processador, memória ${second}, formato ${third}${part.specs[3] === "Wi-Fi" ? ", com Wi-Fi" : ""}`;
+    case "ram":
+      return `Memória de ${first} ${second} em dual channel`;
+    case "ssd":
+      return `Armazenamento de ${first} (${second})`;
+    case "psu":
+      return `Fonte de ${first}, certificação ${second}`;
+    case "case":
+      return `Gabinete ${second} com refrigeração adequada ao processador`;
+    case "extra":
+      return `Monitor de ${first}, ${second}, painel ${third}, ${part.specs[3]}`;
+  }
+}
+
+export function neutralSpecItems(parts: RecommendedPart[]): SpecItem[] {
+  return parts.map((part) => ({ label: ITEM_LABEL[part.category], spec: neutralSpec(part), unitPrice: part.price, estimated: Boolean(part.estimated) }));
 }

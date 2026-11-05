@@ -326,7 +326,7 @@ export const CASE_KITS: CaseKitOption[] = [
 ];
 
 export const SECTORS: Record<Sector, { title: string; softwares: string[] }> = {
-  contabilidade: { title: "Contabilidade", softwares: ["Alterdata", "Domínio", "Fortes", "SCI"] },
+  contabilidade: { title: "Financeiro & Contabilidade", softwares: ["Alterdata", "Domínio", "Fortes", "SCI"] },
   design: { title: "Design & Artes", softwares: ["Photoshop", "Illustrator", "InDesign", "CorelDRAW"] },
   desenvolvimento: { title: "Desenvolvimento de Software", softwares: ["VS Code", "Visual Studio", "Docker", "Android Studio"] },
   educacao: { title: "Educação", softwares: ["Google Workspace", "Microsoft 365", "Moodle", "Teams/Zoom"] },

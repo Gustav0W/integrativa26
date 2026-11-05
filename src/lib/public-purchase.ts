@@ -1,7 +1,7 @@
 import { CATALOG_UPDATED_AT } from "./catalog";
 import { catalogDateLabel, sectorLabel } from "./engine";
-import type { FitReport } from "./fit";
-import type { BuildResult, InsightTone, PartCategory, PublicPurchase, RecommendedPart } from "./types";
+import { neutralSpecItems, type FitReport, type SpecItem } from "./fit";
+import type { BuildResult, InsightTone, PublicPurchase } from "./types";
 
 /**
  * Conferência de apoio para compras públicas em Santa Catarina.
@@ -33,14 +33,6 @@ export interface PublicCheck {
   detail: string;
 }
 
-export interface PublicSpecItem {
-  label: string;
-  /** Descrição técnica sem marca nem modelo. */
-  spec: string;
-  unitPrice: number;
-  estimated: boolean;
-}
-
 export interface PublicDocument {
   label: string;
   /** O SmartBuild entrega um rascunho deste documento. */
@@ -59,7 +51,7 @@ export interface PublicEvaluation {
   /** Quantos PCs ainda cabem abaixo do limite neste ano. */
   maxQuantity: number;
   checks: PublicCheck[];
-  items: PublicSpecItem[];
+  items: SpecItem[];
   documents: PublicDocument[];
 }
 
@@ -75,43 +67,6 @@ export function sanitizePurchase(purchase: PublicPurchase): PublicPurchase {
     quantity: Math.min(Math.max(quantity, 1), PUBLIC_RULES.maxQuantity),
     spentThisYear: Math.max(Number(purchase.spentThisYear) || 0, 0),
   };
-}
-
-const ITEM_LABEL: Record<PartCategory, string> = {
-  cpu: "Processador",
-  gpu: "Vídeo",
-  mobo: "Placa-mãe",
-  ram: "Memória",
-  ssd: "Armazenamento",
-  psu: "Fonte",
-  case: "Gabinete",
-  extra: "Monitor",
-};
-
-/** Socket e nome de chipset ficam de fora: indicam o fabricante do processador. */
-function neutralSpec(part: RecommendedPart): string {
-  const [first, second, third] = part.specs;
-  switch (part.category) {
-    case "cpu": {
-      const cores = part.name.match(/(\d+)C\/(\d+)T/);
-      const size = cores ? `${cores[1]} núcleos e ${cores[2]} threads` : "desempenho compatível com o uso";
-      return `Processador de ${size}${third?.startsWith("iGPU") ? ", com vídeo integrado" : ""}`;
-    }
-    case "gpu":
-      return part.price > 0 ? `Placa de vídeo dedicada com ${first.replace(" VRAM", "")} de memória` : "Vídeo integrado ao processador";
-    case "mobo":
-      return `Placa-mãe compatível com o processador, memória ${second}, formato ${third}${part.specs[3] === "Wi-Fi" ? ", com Wi-Fi" : ""}`;
-    case "ram":
-      return `Memória de ${first} ${second} em dual channel`;
-    case "ssd":
-      return `Armazenamento de ${first} (${second})`;
-    case "psu":
-      return `Fonte de ${first}, certificação ${second}`;
-    case "case":
-      return `Gabinete ${second} com refrigeração adequada ao processador`;
-    case "extra":
-      return `Monitor de ${first}, ${second}, painel ${third}, ${part.specs[3]}`;
-  }
 }
 
 function headlineFor(status: PublicStatus) {
@@ -182,7 +137,7 @@ export function evaluatePublicPurchase(result: BuildResult, rawPurchase: PublicP
       : { tone: "info", label: "Regra de Santa Catarina", detail: "Na administração estadual, a fase preparatória segue o Decreto 47/2023, e a licitação precisa de estudo técnico preliminar (art. 7º)." },
   ];
 
-  const items = result.parts.map((part) => ({ label: ITEM_LABEL[part.category], spec: neutralSpec(part), unitPrice: part.price, estimated: Boolean(part.estimated) }));
+  const items = neutralSpecItems(result.parts);
 
   const documents: PublicDocument[] = [
     { label: "Documento de formalização da demanda", drafted: false },

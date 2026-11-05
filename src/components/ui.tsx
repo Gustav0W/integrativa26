@@ -5,6 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { CircuitBoard, CodeXml, Cpu, DraftingCompass, Fan, Gamepad2, Gpu, GraduationCap, HardDrive, MemoryStick, Monitor, Zap } from "lucide-react";
 import { BUDGET_MAX, BUDGET_MIN, SECTORS } from "@/lib/catalog";
 import { brl, clampBudget } from "@/lib/engine";
+import { describeNeed } from "@/lib/fit";
 import { inputClass } from "./styles";
 import type { BudgetRange, InsightTone, Objective, PartCategory, Resolution, Sector } from "@/lib/types";
 
@@ -236,6 +237,7 @@ export function SectorPicker({
   resolution: Resolution;
   onResolutionChange: (value: Resolution) => void;
 }) {
+  const need = describeNeed(sector, softwares);
   const toggleSoftware = (software: string) => {
     onSoftwaresChange(softwares.includes(software) ? softwares.filter((item) => item !== software) : [...softwares, software]);
   };
@@ -257,6 +259,11 @@ export function SectorPicker({
             </button>
           );
         })}
+      </div>
+      <div className="mt-4 border-l-2 border-brand pl-3">
+        <p className="label-mono text-brand-text">O que este setor precisa</p>
+        <p className="mt-1 text-xs text-muted">{need.profile}</p>
+        <p className="mt-1 font-mono text-[11px] text-muted">{need.references.join(" · ")}</p>
       </div>
       {sector === "gaming" && (
         <div className="mt-4">

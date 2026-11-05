@@ -14,7 +14,7 @@ export const TOOLS: { href: string; short: string; title: string; description: s
     href: "/assistente",
     short: "Assistente",
     title: "Assistente guiado",
-    description: "Informe orçamento e para que vai usar o PC. A IA monta a configuração completa, compatível e sem gargalos.",
+    description: "Informe a faixa de valor e o setor. A IA define a configuração e entrega um parecer técnico, com opção de compra pública.",
     idealFor: "Ideal se você não entende de peças e quer uma resposta pronta.",
   },
   {

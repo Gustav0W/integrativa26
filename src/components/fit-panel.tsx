@@ -7,15 +7,17 @@ const STATUS_UI: Record<FitStatus, { tag: string; text: string }> = {
 };
 
 /** Peça por peça: adequada, em excesso ou insuficiente para o uso. */
-export function FitPanel({ report, justification = false }: { report: FitReport; justification?: boolean }) {
+export function FitPanel({ report, title = "Adequação ao uso", index }: { report: FitReport; title?: string; index?: string }) {
   const { excess, insufficient } = report;
   const summary = excess + insufficient === 0 ? "Tudo dentro da referência" : [excess > 0 && `${excess} em excesso`, insufficient > 0 && `${insufficient} insuficiente(s)`].filter(Boolean).join(" · ");
 
   return (
-    <div className="space-y-4">
-      <section className="border border-line bg-surface p-4">
+    <section className="border border-line bg-surface p-4">
         <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-          <h3 className="text-sm font-semibold">Adequação ao uso</h3>
+          <h3 className="text-sm font-semibold">
+            {index && <span className="mr-2 font-mono text-xs text-brand-text">{index}</span>}
+            {title}
+          </h3>
           <span className={`label-mono ${excess + insufficient === 0 ? STATUS_UI.adequado.text : "text-copper"}`}>{summary}</span>
         </div>
         <ul className="divide-y divide-line border-t border-line">
@@ -32,18 +34,6 @@ export function FitPanel({ report, justification = false }: { report: FitReport;
           ))}
         </ul>
         <p className="mt-3 text-xs text-subtle">Faixas de referência definidas pelo SmartBuild para cada setor.</p>
-      </section>
-
-      {justification && (
-        <section className="border border-line bg-surface p-4">
-          <h3 className="mb-3 text-sm font-semibold">Justificativa técnica</h3>
-          <ul className="space-y-1.5 text-[13px] leading-relaxed text-muted">
-            {report.justification.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </div>
+    </section>
   );
 }

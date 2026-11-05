@@ -9,7 +9,7 @@ const FORWARD = ["nav-forward"];
 
 const HIGHLIGHTS = [
   { code: "A", title: "Sem incompatibilidade", text: "Socket, VRM, memória, fonte, cooler e gabinete conferidos automaticamente." },
-  { code: "B", title: "Sem gargalo", text: "CPU e GPU equilibradas para o seu uso, com estimativa de FPS e desempenho." },
+  { code: "B", title: "Na medida certa", text: "Aponta o que está acima ou abaixo da necessidade de cada setor." },
   { code: "C", title: "Menor preço", text: "Cada peça com busca direta no Google Shopping, KaBuM!, Pichau e Terabyte." },
 ];
 
@@ -20,7 +20,7 @@ export default function Home() {
         {/* Abertura */}
         <section className="grid items-center gap-10 border-b border-ink/80 pb-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <p className="label-mono text-brand-text">Ficha nº 001 — Montagem de PCs com IA</p>
+            <p className="label-mono text-brand-text">Ficha nº 001 — Configuração e aquisição de computadores com IA</p>
             <h1 className="heading mt-5 text-5xl sm:text-6xl xl:text-7xl">
               O PC certo
               <br />
@@ -29,7 +29,7 @@ export default function Home() {
               você <span className="text-brand-text">faz.</span>
             </h1>
             <p className="mt-6 max-w-xl text-base text-pretty text-muted sm:text-lg">
-              A SmartBuild AI monta, confere e explica configurações de computador dentro do seu orçamento — mesmo que você nunca tenha montado um PC.
+              A SmartBuild AI define, confere e justifica a configuração de computadores para cada setor, de compras públicas ao uso pessoal.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/assistente" transitionTypes={FORWARD} className={primaryButton}>
@@ -45,6 +45,14 @@ export default function Home() {
             <CircuitArt className="mx-auto w-full max-w-md" />
           </div>
         </section>
+
+        {/* Setor público */}
+        <Link href="/assistente" transitionTypes={FORWARD} className="group mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 border border-l-4 border-line border-l-brand bg-surface p-5 transition hover:bg-surface-2">
+          <span className="label-mono text-brand-text">Setor público</span>
+          <span className="heading text-xl">Compra pública em Santa Catarina</span>
+          <span className="min-w-0 flex-1 basis-64 text-sm text-muted">Parecer técnico por setor, especificação sem marca e conferência da Lei 14.133.</span>
+          <ArrowRight className="size-5 text-subtle transition group-hover:translate-x-1 group-hover:text-brand-text" />
+        </Link>
 
         {/* Índice de ferramentas */}
         <section className="mt-12">
@@ -83,13 +91,6 @@ export default function Home() {
             </div>
           ))}
         </section>
-
-        <Link href="/assistente" transitionTypes={FORWARD} className="group mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border border-line bg-surface p-5 transition hover:border-ink/40">
-          <span className="label-mono text-copper">Opcional —</span>
-          <span className="text-sm font-semibold">Compra pública em Santa Catarina</span>
-          <span className="min-w-0 flex-1 basis-64 text-sm text-muted">Confere o limite de dispensa da Lei 14.133 e gera a especificação sem marca.</span>
-          <ArrowRight className="size-4 text-subtle transition group-hover:translate-x-1 group-hover:text-brand-text" />
-        </Link>
       </div>
     </PageTransition>
   );

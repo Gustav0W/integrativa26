@@ -11,7 +11,9 @@ Sistema web que ajuda pessoas leigas ou entusiastas a montar o computador ideal 
 | **Montar** (`/montar`) | Quem já viu peças que gostou | Escolhe peça por peça; a IA avalia compatibilidade e uso em tempo real |
 | **Analisar PDF** (`/analisar`) | Quem recebeu um orçamento | Lê o PDF (ou texto) de um orçamento/anúncio e diz se vale a pena |
 
-**Adequação ao uso:** Assistente, Conversar, Montar e Analisar PDF mostram, peça por peça, se o processador, vídeo, memória, armazenamento e fonte estão adequados, em excesso ou insuficientes para o uso. No Assistente e no Conversar, o resultado também traz uma justificativa técnica sem marca. As faixas são critério do projeto, em `src/lib/fit.ts`.
+**Parecer técnico:** no Assistente e no Conversar, o resultado reúne necessidade identificada, configuração recomendada, peças acima ou abaixo da necessidade, compatibilidade, justificativa técnica e especificação sem marca. Montar e Analisar PDF mostram a adequação de cada peça ao uso. As faixas de cada setor são critério do projeto, em `src/lib/fit.ts`.
+
+**Privacidade:** esta versão é um protótipo acadêmico e usa o plano gratuito do Gemini, em que o Google pode usar o conteúdo enviado para melhorar os produtos dele. Para uso real em órgão público, é preciso avaliar um plano pago ou contrato e as regras de proteção de dados do órgão.
 
 **Compra pública (SC):** opção do Assistente para órgãos públicos de Santa Catarina. Com a quantidade de PCs e o gasto do ano, confere o limite de dispensa da Lei 14.133/2021, descreve as peças sem marca, aponta os documentos do processo e gera um rascunho de termo de referência. É uma conferência de apoio, não um parecer jurídico.
 
